@@ -27,6 +27,9 @@ interface TaskContextType {
   isAdmin: () => boolean
   updateUserRole: (userId: string, role: "admin" | "user") => void
   reorderTaskInColumn: (taskId: string, newOrder: number, column: BoardColumn) => void
+  addUser: (user: Omit<User, "id">) => void
+  deleteUser: (userId: string) => boolean
+  editUser: (userId: string, updates: Partial<Omit<User, "id">>) => boolean
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined)
@@ -41,7 +44,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const login = (email: string, password: string): boolean => {
     const user = users.find((u) => u.email === email)
-    if (user) {
+    if (user && user.password === password) {
       setCurrentUser(user)
       return true
     }
@@ -77,6 +80,63 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (currentUser?.id === userId) {
       setCurrentUser((prev) => (prev ? { ...prev, role } : null))
     }
+  }
+
+  const addUser = (userData: Omit<User, "id">) => {
+    if (!currentUser || currentUser.role !== "admin") return
+
+    const newUser: User = {
+      ...userData,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    }
+
+    setUsers((prev) => [...prev, newUser])
+  }
+
+  const deleteUser = (userId: string): boolean => {
+    if (!currentUser || currentUser.role !== "admin") return false
+    
+    // Prevent deleting yourself
+    if (userId === currentUser.id) return false
+
+    // Check if user is assigned to any active tasks
+    const hasActiveTasks = tasks.some(
+      (task) => 
+        (task.assigneeId === userId || task.handlerId === userId) &&
+        task.column !== "done"
+    )
+
+    if (hasActiveTasks) {
+      return false
+    }
+
+    // Remove user from users array
+    setUsers((prev) => prev.filter((user) => user.id !== userId))
+    
+    return true
+  }
+
+  const editUser = (userId: string, updates: Partial<Omit<User, "id">>): boolean => {
+    if (!currentUser || currentUser.role !== "admin") return false
+
+    // Check if email is being changed and if it already exists
+    if (updates.email) {
+      const emailExists = users.some((u) => u.email === updates.email && u.id !== userId)
+      if (emailExists) {
+        return false
+      }
+    }
+
+    setUsers((prev) =>
+      prev.map((user) => (user.id === userId ? { ...user, ...updates } : user))
+    )
+
+    // Update current user if editing self
+    if (currentUser.id === userId) {
+      setCurrentUser((prev) => (prev ? { ...prev, ...updates } : null))
+    }
+
+    return true
   }
 
   const createNotification = (
@@ -428,6 +488,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         isAdmin,
         updateUserRole,
         reorderTaskInColumn,
+        addUser,
+        deleteUser,
+        editUser,
       }}
     >
       {children}

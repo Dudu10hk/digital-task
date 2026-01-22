@@ -21,15 +21,18 @@ export function LoginForm() {
     setError("")
 
     if (!login(email, password)) {
-      setError("כתובת אימייל לא נמצאה במערכת")
+      setError("אימייל או סיסמה שגויים")
     }
   }
 
   const handleQuickLogin = (userEmail: string) => {
-    setEmail(userEmail)
-    setPassword("demo")
-    if (!login(userEmail, "demo")) {
-      setError("שגיאה בהתחברות")
+    const user = users.find((u) => u.email === userEmail)
+    if (user) {
+      setEmail(userEmail)
+      setPassword(user.password)
+      if (!login(userEmail, user.password)) {
+        setError("שגיאה בהתחברות")
+      }
     }
   }
 
@@ -172,6 +175,7 @@ export function LoginForm() {
                   <div className="text-right flex-1">
                     <p className="font-semibold">{user.name}</p>
                     <p className="text-sm text-muted-foreground">{user.role}</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">סיסמה: {user.password}</p>
                   </div>
                   <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:-translate-x-1 transition-all" />
                 </button>

@@ -1,10 +1,10 @@
 import type { Task, User } from "./types"
 
 export const mockUsers: User[] = [
-  { id: "1", name: "דנה כהן", email: "dana@insurance.co.il", avatar: "/woman-with-brown-hair-professional.jpg", role: "admin" },
-  { id: "2", name: "יוסי לוי", email: "yossi@insurance.co.il", avatar: "/professional-man-glasses.png", role: "user" },
-  { id: "3", name: "מיכל אברהם", email: "michal@insurance.co.il", avatar: "/professional-blonde-woman.png", role: "admin" },
-  { id: "4", name: "אלון שמיר", email: "alon@insurance.co.il", avatar: "/man-beard-professional.jpg", role: "user" },
+  { id: "1", name: "דנה כהן", email: "dana@insurance.co.il", password: "123456", avatar: "/woman-with-brown-hair-professional.jpg", role: "admin" },
+  { id: "2", name: "יוסי לוי", email: "yossi@insurance.co.il", password: "123456", avatar: "/professional-man-glasses.png", role: "user" },
+  { id: "3", name: "מיכל אברהם", email: "michal@insurance.co.il", password: "123456", avatar: "/professional-blonde-woman.png", role: "admin" },
+  { id: "4", name: "אלון שמיר", email: "alon@insurance.co.il", password: "123456", avatar: "/man-beard-professional.jpg", role: "user" },
 ]
 
 export const mockTasks: Task[] = [
