@@ -9,7 +9,8 @@
     "start": "next start",
     "setup": "bash setup.sh",
     "init-git": "bash init-git.sh",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "deploy": "curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_5mnmuMEaJZr8uRs4HBvpgkSUy9Jq/0l15Zaj4v6"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
