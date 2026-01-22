@@ -85,7 +85,7 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
+                <DropdownMenuContent align="end" dir="rtl">
                   <DropdownMenuItem onClick={onEdit} className="gap-2">
                     <Edit className="w-4 h-4" />
                     עריכה

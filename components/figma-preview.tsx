@@ -20,7 +20,7 @@ export function FigmaPreview({ url, open, onOpenChange }: FigmaPreviewProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[85vh] p-0 overflow-hidden">
+      <DialogContent className="max-w-5xl h-[85vh] p-0 overflow-hidden" dir="rtl">
         <DialogHeader className="p-4 border-b flex flex-row items-center justify-between">
           <DialogTitle>תצוגה מקדימה - Figma</DialogTitle>
           <div className="flex items-center gap-2">

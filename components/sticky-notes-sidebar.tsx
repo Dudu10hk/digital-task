@@ -82,27 +82,27 @@ export function StickyNotesSidebar() {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed left-4 top-20 z-40 w-10 h-10 rounded-full shadow-lg transition-all ${
-          isOpen ? "translate-x-[280px]" : ""
+        className={`fixed right-4 top-20 z-40 w-10 h-10 rounded-full shadow-lg bg-card border transition-all ${
+          isOpen ? "translate-x-[-280px]" : ""
         }`}
       >
-        {isOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+        {isOpen ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
       </Button>
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-full w-[280px] bg-card border-r shadow-xl z-30 transition-transform duration-300 ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
+        className={`fixed right-0 top-0 h-full w-[280px] bg-card border-l shadow-xl z-30 transition-transform duration-300 ${
+          isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="p-4 border-b bg-gradient-to-br from-primary/5 to-primary/10">
             <div className="flex items-center gap-2 mb-3">
-              <StickyNote className="w-5 h-5 text-primary" />
-              <h2 className="font-bold text-lg">הפתקים שלי</h2>
+              <StickyNote className="w-5 h-5 text-primary shrink-0" />
+              <h2 className="font-bold text-lg truncate">הפתקים שלי</h2>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground truncate">
               {userNotes.length} פתקים אישיים
             </p>
           </div>

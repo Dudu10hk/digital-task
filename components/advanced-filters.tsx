@@ -101,7 +101,7 @@ export function AdvancedFilters({ onFilterChange }: AdvancedFiltersProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-80 p-4 space-y-4">
+        <PopoverContent align="end" className="w-80 p-4 space-y-4" dir="rtl">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-sm">פילטרים מתקדמים</h3>
             {activeFiltersCount > 0 && (

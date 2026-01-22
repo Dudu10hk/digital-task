@@ -50,12 +50,12 @@ export function Dashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex" dir="rtl">
       {/* Sticky Notes Sidebar */}
       <StickyNotesSidebar />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navigation Bar */}
         <header className="bg-card border-b sticky top-0 z-50 shadow-sm">
         <div className="flex items-center justify-between h-16 px-6">
@@ -99,7 +99,7 @@ export function Dashboard() {
                   <span className="hidden sm:inline font-medium">{currentUser?.name}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuContent align="end" className="w-48" dir="rtl">
                 <div className="px-3 py-2">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-sm">{currentUser?.name}</p>

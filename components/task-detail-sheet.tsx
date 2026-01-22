@@ -190,7 +190,7 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                     <Trash2 className="w-5 h-5" />
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent dir="rtl">
                   <AlertDialogHeader>
                     <AlertDialogTitle>מחיקת משימה</AlertDialogTitle>
                     <AlertDialogDescription>
