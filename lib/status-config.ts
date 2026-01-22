@@ -1,4 +1,4 @@
-import type { TaskStatus, BoardColumn } from "./types"
+import type { TaskStatus, BoardColumn, InProgressStation } from "./types"
 
 export const statusConfig: Record<TaskStatus, { label: string; color: string; bgClass: string }> = {
   todo: {
@@ -51,21 +51,49 @@ export const columnConfig: Record<BoardColumn, { label: string; color: string }>
     label: "Done",
     color: "bg-emerald-500",
   },
-  "pm-review": {
-    label: "PM Review",
-    color: "bg-purple-500",
-  },
-  "qa-review": {
-    label: "QA Review",
-    color: "bg-amber-500",
-  },
-  "done-done": {
-    label: "Done Done",
-    color: "bg-green-600",
-  },
 }
 
 export const boardColumns = Object.entries(columnConfig).map(([value, config]) => ({
   id: value as BoardColumn,
   ...config,
+}))
+
+export const inProgressStationConfig: Record<InProgressStation, { label: string; color: string; icon: string }> = {
+  design: {
+    label: "בעיצוב",
+    color: "bg-purple-500",
+    icon: "Palette",
+  },
+  development: {
+    label: "בפיתוח",
+    color: "bg-blue-600",
+    icon: "Code",
+  },
+  testing: {
+    label: "בבדיקות",
+    color: "bg-amber-500",
+    icon: "TestTube",
+  },
+  feasibility: {
+    label: "בבחינת יישימות",
+    color: "bg-teal-500",
+    icon: "Search",
+  },
+  "business-review": {
+    label: "בבחינה מול החטיבה העסקית",
+    color: "bg-indigo-500",
+    icon: "Users",
+  },
+  "ux-requirements": {
+    label: "בהגדרת דרישה ב-UX",
+    color: "bg-pink-500",
+    icon: "Layers",
+  },
+}
+
+export const inProgressStationOptions = Object.entries(inProgressStationConfig).map(([value, config]) => ({
+  value: value as InProgressStation,
+  label: config.label,
+  color: config.color,
+  icon: config.icon,
 }))

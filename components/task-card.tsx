@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { TaskDetailSheet } from "@/components/task-detail-sheet"
 import { useTaskContext } from "@/lib/task-context"
-import { statusConfig } from "@/lib/status-config"
+import { statusConfig, inProgressStationConfig } from "@/lib/status-config"
 import type { Task } from "@/lib/types"
-import { MoreHorizontal, Calendar, Trash2, Edit, Figma, FileText, MessageSquare } from "lucide-react"
+import { MoreHorizontal, Calendar, Trash2, Edit, Figma, FileText, MessageSquare, Wrench, Palette, Code, TestTube, Search, Users, Layers } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 
@@ -41,12 +41,26 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
     low: "bg-blue-500 text-white border-0",
   }
 
+  const getStationIcon = (iconName: string) => {
+    const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+      Palette,
+      Code,
+      TestTube,
+      Search,
+      Users,
+      Layers,
+    }
+    const Icon = icons[iconName] || FileText
+    return <Icon className="w-3 h-3" />
+  }
+
   const handleCardClick = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("button")) return
     setIsDetailOpen(true)
   }
 
   const assignee = task.assigneeId ? getUserById(task.assigneeId) : null
+  const handler = task.handlerId ? getUserById(task.handlerId) : null
 
   return (
     <>
@@ -101,11 +115,18 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
             <Badge className={`${priorityStyles[task.priority]} text-xs font-medium`}>
               {priorityLabels[task.priority]}
             </Badge>
+            {/* In Progress Station Badge */}
+            {task.column === "in-progress" && task.inProgressStation && (
+              <Badge className={`${inProgressStationConfig[task.inProgressStation].color} text-white border-0 text-xs font-medium flex items-center gap-1.5`}>
+                {getStationIcon(inProgressStationConfig[task.inProgressStation].icon)}
+                {inProgressStationConfig[task.inProgressStation].label}
+              </Badge>
+            )}
           </div>
 
           {/* Footer - Meta info & Avatar */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
               {task.dueDate && (
                 <div className="flex items-center gap-1.5 bg-gray-100 text-foreground px-2 py-1 rounded-md">
                   <Calendar className="w-3.5 h-3.5" />
@@ -114,8 +135,14 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
               )}
 
               {task.figmaLink && (
-                <div className="bg-gray-100 p-1.5 rounded-md">
+                <div className="bg-gray-100 p-1.5 rounded-md" title="Figma Design">
                   <Figma className="w-3.5 h-3.5 text-foreground" />
+                </div>
+              )}
+
+              {task.processSpecLink && (
+                <div className="bg-gray-100 p-1.5 rounded-md" title="אפיון תהליך">
+                  <FileText className="w-3.5 h-3.5 text-foreground" />
                 </div>
               )}
 
@@ -134,17 +161,36 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
               )}
             </div>
 
-            {assignee && (
-              <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm">
-                <AvatarImage src={assignee.avatar || "/placeholder.svg"} alt={assignee.name} />
-                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-medium">
-                  {assignee.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Handler Avatar */}
+              {handler && (
+                <div className="flex items-center gap-1" title={`גורם מטפל: ${handler.name}`}>
+                  <Wrench className="w-3 h-3 text-muted-foreground" />
+                  <Avatar className="w-7 h-7 ring-2 ring-amber-400 shadow-sm">
+                    <AvatarImage src={handler.avatar || "/placeholder.svg"} alt={handler.name} />
+                    <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700 font-semibold">
+                      {handler.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
+
+              {/* Assignee Avatar */}
+              {assignee && (
+                <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm" title={`אחראי: ${assignee.name}`}>
+                  <AvatarImage src={assignee.avatar || "/placeholder.svg"} alt={assignee.name} />
+                  <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-medium">
+                    {assignee.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

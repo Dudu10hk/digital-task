@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, type ReactNode } from "react"
-import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification } from "./types"
+import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation } from "./types"
 import { mockTasks, mockUsers } from "./mock-data"
 
 interface TaskContextType {
@@ -18,6 +18,8 @@ interface TaskContextType {
   addComment: (taskId: string, content: string, taggedUserIds?: string[]) => void
   updateTaskStatus: (taskId: string, status: TaskStatus) => void
   updateTaskColumn: (taskId: string, column: BoardColumn) => void
+  updateInProgressStation: (taskId: string, station: InProgressStation, note?: string) => void
+  updateHandler: (taskId: string, handlerId: string | null) => void
   getUserById: (id: string) => User | undefined
   markNotificationAsRead: (notificationId: string) => void
   markAllNotificationsAsRead: () => void
@@ -62,6 +64,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return false
     if (currentUser.role === "admin") return true
     if (task.assigneeId === currentUser.id) return true
+    if (task.handlerId === currentUser.id) return true
     if (task.taggedUserIds.includes(currentUser.id)) return true
     if (task.createdBy === currentUser.id) return true
     return false
@@ -77,7 +80,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }
 
   const createNotification = (
-    type: "mention" | "assignment" | "comment",
+    type: "mention" | "assignment" | "comment" | "handler",
     taskId: string,
     taskTitle: string,
     toUserId: string,
@@ -137,6 +140,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         `${currentUser.name} שייך/ה אליך את המשימה "${newTask.title}"`,
       )
     }
+
+    if (taskData.handlerId && taskData.handlerId !== currentUser.id && taskData.handlerId !== taskData.assigneeId) {
+      createNotification(
+        "handler",
+        newTask.id,
+        newTask.title,
+        taskData.handlerId,
+        `${currentUser.name} הקצה אותך כגורם מטפל למשימה "${newTask.title}"`,
+      )
+    }
   }
 
   const updateTask = (id: string, updates: Partial<Task>) => {
@@ -174,6 +187,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             task.title,
             updates.assigneeId,
             `${currentUser.name} שייך/ה אליך את המשימה "${task.title}"`,
+          )
+        }
+
+        if (updates.handlerId && updates.handlerId !== task.handlerId && updates.handlerId !== currentUser.id) {
+          createNotification(
+            "handler",
+            task.id,
+            task.title,
+            updates.handlerId,
+            `${currentUser.name} הקצה אותך כגורם מטפל למשימה "${task.title}"`,
           )
         }
 
@@ -290,6 +313,87 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const updateInProgressStation = (taskId: string, station: InProgressStation, note?: string) => {
+    if (!currentUser) return
+    
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    const oldStation = task.inProgressStation
+
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== taskId) return t
+
+        const historyEntry: TaskHistoryEntry = {
+          id: Date.now().toString() + "station",
+          action: "station_changed",
+          field: "inProgressStation",
+          stationFrom: oldStation,
+          stationTo: station,
+          userId: currentUser.id,
+          userName: currentUser.name,
+          timestamp: new Date(),
+        }
+
+        return {
+          ...t,
+          inProgressStation: station,
+          stationNote: note || t.stationNote,
+          updatedAt: new Date(),
+          history: [...t.history, historyEntry],
+        }
+      })
+    )
+  }
+
+  const updateHandler = (taskId: string, handlerId: string | null) => {
+    if (!currentUser) return
+    
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+
+    const handler = handlerId ? users.find((u) => u.id === handlerId) : null
+    const oldHandlerName = task.handlerName
+
+    setTasks((prev) =>
+      prev.map((t) => {
+        if (t.id !== taskId) return t
+
+        const historyEntry: TaskHistoryEntry = {
+          id: Date.now().toString() + "handler",
+          action: "handler_changed",
+          field: "handlerId",
+          oldValue: oldHandlerName || "",
+          newValue: handler?.name || "",
+          userId: currentUser.id,
+          userName: currentUser.name,
+          timestamp: new Date(),
+        }
+
+        return {
+          ...t,
+          handlerId,
+          handlerName: handler?.name || null,
+          handlerAvatar: handler?.avatar || null,
+          updatedAt: new Date(),
+          history: [...t.history, historyEntry],
+        }
+      })
+    )
+
+    // Send notification to new handler
+    if (handlerId && handlerId !== currentUser.id) {
+      createNotification(
+        "handler",
+        task.id,
+        task.title,
+        handlerId,
+        `${currentUser.name} הקצה אותך כגורם מטפל למשימה "${task.title}"`,
+      )
+    }
+  }
+
   const markNotificationAsRead = (notificationId: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)))
   }
@@ -315,6 +419,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addComment,
         updateTaskStatus,
         updateTaskColumn,
+        updateInProgressStation,
+        updateHandler,
         getUserById,
         markNotificationAsRead,
         markAllNotificationsAsRead,

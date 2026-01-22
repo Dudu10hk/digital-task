@@ -25,8 +25,8 @@ import {
 import { FigmaPreview } from "@/components/figma-preview"
 import { MentionInput } from "@/components/mention-input"
 import { useTaskContext } from "@/lib/task-context"
-import { statusConfig, columnConfig } from "@/lib/status-config"
-import type { Task, TaskStatus, TaskPriority, BoardColumn } from "@/lib/types"
+import { statusConfig, columnConfig, inProgressStationConfig } from "@/lib/status-config"
+import type { Task, TaskStatus, TaskPriority, BoardColumn, InProgressStation } from "@/lib/types"
 import {
   Calendar,
   User,
@@ -41,6 +41,14 @@ import {
   ExternalLink,
   Eye,
   Columns3,
+  Wrench,
+  Navigation,
+  Palette,
+  Code,
+  TestTube,
+  Search,
+  Users as UsersIcon,
+  Layers,
 } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
@@ -52,7 +60,7 @@ interface TaskDetailSheetProps {
 }
 
 export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetProps) {
-  const { updateTask, addComment, deleteTask, users, currentUser, canEditTask } = useTaskContext()
+  const { updateTask, addComment, deleteTask, users, currentUser, canEditTask, updateInProgressStation, updateHandler } = useTaskContext()
   const [newComment, setNewComment] = useState("")
   const [taggedUserIds, setTaggedUserIds] = useState<string[]>([])
   const [showFigmaPreview, setShowFigmaPreview] = useState(false)
@@ -76,6 +84,26 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
     { value: "low", label: "נמוכה", color: "bg-blue-500" },
   ]
 
+  const stationOptions = Object.entries(inProgressStationConfig).map(([value, config]) => ({
+    value: value as InProgressStation,
+    label: config.label,
+    color: config.color,
+    icon: config.icon,
+  }))
+
+  const getStationIcon = (iconName: string) => {
+    const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+      Palette,
+      Code,
+      TestTube,
+      Search,
+      Users: UsersIcon,
+      Layers,
+    }
+    const Icon = icons[iconName] || FileText
+    return <Icon className="w-4 h-4" />
+  }
+
   const handleStatusChange = (status: TaskStatus) => {
     updateTask(task.id, { status })
   }
@@ -93,7 +121,16 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
     updateTask(task.id, {
       assigneeId,
       assigneeName: assignee?.name || null,
+      assigneeAvatar: assignee?.avatar || null,
     })
+  }
+
+  const handleHandlerChange = (handlerId: string) => {
+    updateHandler(task.id, handlerId)
+  }
+
+  const handleStationChange = (station: InProgressStation) => {
+    updateInProgressStation(task.id, station, task.stationNote)
   }
 
   const handleCommentChange = (value: string, tagged: string[]) => {
@@ -240,12 +277,64 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
               </Select>
             </div>
 
-            {/* Assignee & Due Date */}
+            {/* In Progress Station */}
+            {task.column === "in-progress" && (
+              <div className="space-y-3 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+                <Label className="flex items-center gap-2 text-sm font-semibold">
+                  <Navigation className="w-4 h-4" />
+                  תחנה נוכחית
+                </Label>
+                {task.inProgressStation && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`px-3 py-1.5 rounded-lg ${inProgressStationConfig[task.inProgressStation].color} text-white flex items-center gap-2 font-medium`}>
+                      {getStationIcon(inProgressStationConfig[task.inProgressStation].icon)}
+                      {inProgressStationConfig[task.inProgressStation].label}
+                    </div>
+                  </div>
+                )}
+
+                {task.stationNote && (
+                  <div className="text-sm text-muted-foreground bg-background/50 p-3 rounded-lg">
+                    {task.stationNote}
+                  </div>
+                )}
+
+                {canEdit && (
+                  <div className="space-y-2">
+                    <Select value={task.inProgressStation} onValueChange={(v) => handleStationChange(v as InProgressStation)}>
+                      <SelectTrigger className="bg-background border border-border/40 hover:bg-muted/60 rounded-lg h-11">
+                        <SelectValue placeholder="בחר תחנה" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stationOptions.map((station) => (
+                          <SelectItem key={station.value} value={station.value}>
+                            <div className="flex items-center gap-2.5">
+                              {getStationIcon(station.icon)}
+                              <span className="font-medium">{station.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Textarea
+                      value={task.stationNote || ""}
+                      onChange={(e) => updateTask(task.id, { stationNote: e.target.value })}
+                      placeholder="הערה מתאימה לתחנה הנוכחית..."
+                      rows={2}
+                      className="bg-background border border-border/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg resize-none"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Assignee & Handler */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2.5">
                 <Label className="text-muted-foreground text-xs font-semibold flex items-center gap-2 uppercase tracking-wide">
                   <User className="w-4 h-4" />
-                  אחראי
+                  אחראי כללי
                 </Label>
                 <Select value={task.assigneeId || ""} onValueChange={handleAssigneeChange} disabled={!canEdit}>
                   <SelectTrigger className="bg-muted/40 border border-border/40 hover:bg-muted/60 rounded-lg h-11">
@@ -269,21 +358,47 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
 
               <div className="space-y-2.5">
                 <Label className="text-muted-foreground text-xs font-semibold flex items-center gap-2 uppercase tracking-wide">
-                  <Calendar className="w-4 h-4" />
-                  תאריך יעד
+                  <Wrench className="w-4 h-4" />
+                  גורם מטפל
                 </Label>
-                <Input
-                  type="date"
-                  value={task.dueDate ? task.dueDate.toISOString().split("T")[0] : ""}
-                  onChange={(e) =>
-                    updateTask(task.id, {
-                      dueDate: e.target.value ? new Date(e.target.value) : null,
-                    })
-                  }
-                  className="bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg h-11"
-                  disabled={!canEdit}
-                />
+                <Select value={task.handlerId || ""} onValueChange={handleHandlerChange} disabled={!canEdit}>
+                  <SelectTrigger className="bg-muted/40 border border-border/40 hover:bg-muted/60 rounded-lg h-11">
+                    <SelectValue placeholder="בחר גורם מטפל" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar className="w-6 h-6 ring-2 ring-amber-400">
+                            <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                            <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700">{user.name.slice(0, 2)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{user.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+
+            {/* Due Date */}
+            <div className="space-y-2.5">
+              <Label className="text-muted-foreground text-xs font-semibold flex items-center gap-2 uppercase tracking-wide">
+                <Calendar className="w-4 h-4" />
+                תאריך יעד
+              </Label>
+              <Input
+                type="date"
+                value={task.dueDate ? task.dueDate.toISOString().split("T")[0] : ""}
+                onChange={(e) =>
+                  updateTask(task.id, {
+                    dueDate: e.target.value ? new Date(e.target.value) : null,
+                  })
+                }
+                className="bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg h-11"
+                disabled={!canEdit}
+              />
             </div>
 
             {/* Description */}
@@ -324,6 +439,24 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                     פתח בחלון חדש
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {/* Process Spec Link */}
+            {task.processSpecLink && (
+              <div className="space-y-3">
+                <Label className="text-muted-foreground text-xs font-semibold flex items-center gap-2 uppercase tracking-wide">
+                  <FileText className="w-4 h-4" />
+                  קישור לאפיון תהליך
+                </Label>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 text-blue-700 hover:from-blue-100 hover:to-blue-200 hover:border-blue-300 rounded-lg h-11 font-medium"
+                  onClick={() => window.open(task.processSpecLink, "_blank")}
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  פתח אפיון תהליך
+                </Button>
               </div>
             )}
 
@@ -450,10 +583,48 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                         <p className="text-sm">
                           <span className="font-semibold">{entry.userName}</span>{" "}
                           {entry.action === "created" && "יצר/ה את המשימה"}
+                          {entry.action === "station_changed" && entry.stationFrom && entry.stationTo && (
+                            <>
+                              שינה/תה את התחנה מ-
+                              <span className="font-medium text-blue-600">
+                                {inProgressStationConfig[entry.stationFrom].label}
+                              </span>
+                              {" "}ל-
+                              <span className="font-medium text-blue-600">
+                                {inProgressStationConfig[entry.stationTo].label}
+                              </span>
+                            </>
+                          )}
+                          {entry.action === "handler_changed" && (
+                            <>
+                              {entry.oldValue && entry.newValue ? (
+                                <>
+                                  החליף/ה את{" "}
+                                  <span className="font-medium text-amber-600">{entry.oldValue}</span>
+                                  {" "}ב-
+                                  <span className="font-medium text-amber-600">{entry.newValue}</span>
+                                  {" "}כגורם מטפל
+                                </>
+                              ) : entry.newValue ? (
+                                <>
+                                  הקצה את{" "}
+                                  <span className="font-medium text-amber-600">{entry.newValue}</span>
+                                  {" "}כגורם מטפל
+                                </>
+                              ) : (
+                                "הסיר/ה את הגורם המטפל"
+                              )}
+                            </>
+                          )}
                           {entry.action === "updated" && (
                             <>
                               עדכן/ה את{" "}
-                              {entry.field === "status" ? "הסטטוס" : entry.field === "column" ? "העמודה" : entry.field}
+                              {entry.field === "status" ? "הסטטוס" : 
+                               entry.field === "column" ? "העמודה" : 
+                               entry.field === "assigneeId" ? "האחראי" :
+                               entry.field === "priority" ? "רמת הדחיפות" :
+                               entry.field === "description" ? "התיאור" :
+                               entry.field}
                               {entry.oldValue && entry.newValue && (
                                 <span className="text-muted-foreground">
                                   {" "}

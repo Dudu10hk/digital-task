@@ -10,9 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTaskContext } from "@/lib/task-context"
-import { statusConfig, statusOptions, boardColumns } from "@/lib/status-config"
-import type { Task, TaskStatus, TaskPriority, BoardColumn } from "@/lib/types"
-import { Link2, Upload, X, FileText, FileSpreadsheet, File } from "lucide-react"
+import { statusConfig, statusOptions, boardColumns, inProgressStationOptions } from "@/lib/status-config"
+import type { Task, TaskStatus, TaskPriority, BoardColumn, InProgressStation } from "@/lib/types"
+import { Link2, Upload, X, FileText, FileSpreadsheet, File, Wrench, Palette, Code, TestTube, Search, Users, Layers } from "lucide-react"
 import type { TaskFile } from "@/lib/types"
 
 interface TaskDialogProps {
@@ -33,7 +33,11 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
   const [priority, setPriority] = useState<TaskPriority>("medium")
   const [dueDate, setDueDate] = useState("")
   const [assigneeId, setAssigneeId] = useState<string>("")
+  const [handlerId, setHandlerId] = useState<string>("")
   const [figmaLink, setFigmaLink] = useState("")
+  const [processSpecLink, setProcessSpecLink] = useState("")
+  const [inProgressStation, setInProgressStation] = useState<InProgressStation | undefined>(undefined)
+  const [stationNote, setStationNote] = useState("")
   const [files, setFiles] = useState<TaskFile[]>([])
 
   useEffect(() => {
@@ -45,7 +49,11 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
       setPriority(task.priority)
       setDueDate(task.dueDate ? task.dueDate.toISOString().split("T")[0] : "")
       setAssigneeId(task.assigneeId || "")
+      setHandlerId(task.handlerId || "")
       setFigmaLink(task.figmaLink || "")
+      setProcessSpecLink(task.processSpecLink || "")
+      setInProgressStation(task.inProgressStation)
+      setStationNote(task.stationNote || "")
       setFiles(task.files || [])
     } else {
       setTitle("")
@@ -55,7 +63,11 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
       setPriority("medium")
       setDueDate("")
       setAssigneeId("")
+      setHandlerId("")
       setFigmaLink("")
+      setProcessSpecLink("")
+      setInProgressStation(undefined)
+      setStationNote("")
       setFiles([])
     }
   }, [mode, task, open, defaultColumn])
@@ -64,6 +76,7 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
     e.preventDefault()
 
     const assignee = users.find((u) => u.id === assigneeId)
+    const handler = users.find((u) => u.id === handlerId)
 
     const taskData = {
       title,
@@ -75,8 +88,14 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
       assigneeId: assigneeId || null,
       assigneeName: assignee?.name || null,
       assigneeAvatar: assignee?.avatar || null,
+      handlerId: handlerId || null,
+      handlerName: handler?.name || null,
+      handlerAvatar: handler?.avatar || null,
+      inProgressStation: column === "in-progress" ? inProgressStation : undefined,
+      stationNote: column === "in-progress" ? stationNote : undefined,
       taggedUserIds: mode === "edit" && task ? task.taggedUserIds : [],
       figmaLink: figmaLink || undefined,
+      processSpecLink: processSpecLink || undefined,
       createdBy: currentUser?.id || "",
       files,
     }
@@ -95,6 +114,19 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
     { value: "medium", label: "בינונית", color: "bg-amber-500" },
     { value: "low", label: "נמוכה", color: "bg-blue-500" },
   ]
+
+  const getStationIcon = (iconName: string) => {
+    const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+      Palette,
+      Code,
+      TestTube,
+      Search,
+      Users,
+      Layers,
+    }
+    const Icon = icons[iconName] || FileText
+    return <Icon className="w-4 h-4" />
+  }
 
   const getFileType = (fileName: string): "pdf" | "excel" | "word" | "other" => {
     const ext = fileName.split(".").pop()?.toLowerCase()
@@ -282,6 +314,75 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
             </Select>
           </div>
 
+          {/* Handler */}
+          <div className="space-y-2.5">
+            <Label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <Wrench className="w-4 h-4" />
+              גורם מטפל
+            </Label>
+            <Select value={handlerId} onValueChange={setHandlerId}>
+              <SelectTrigger className="h-12 bg-muted/40 border border-border/40 hover:bg-muted/60 rounded-lg">
+                <SelectValue placeholder="בחר גורם מטפל" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-7 h-7 ring-2 ring-background">
+                        <AvatarImage src={user.avatar || "/placeholder.svg"} />
+                        <AvatarFallback className="text-[10px] bg-amber-100 text-amber-700 font-semibold">
+                          {user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{user.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* In Progress Station - show only when column is in-progress */}
+          {column === "in-progress" && (
+            <div className="space-y-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div className="space-y-2.5">
+                <Label className="text-sm font-semibold text-foreground">תחנה נוכחית</Label>
+                <Select value={inProgressStation} onValueChange={(v) => setInProgressStation(v as InProgressStation)}>
+                  <SelectTrigger className="h-12 bg-background border border-border/40 hover:bg-muted/60 rounded-lg">
+                    <SelectValue placeholder="בחר תחנה" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {inProgressStationOptions.map((station) => (
+                      <SelectItem key={station.value} value={station.value}>
+                        <div className="flex items-center gap-2.5">
+                          {getStationIcon(station.icon)}
+                          <span className="font-medium">{station.label}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2.5">
+                <Label htmlFor="stationNote" className="text-sm font-semibold text-foreground">
+                  הערה לתחנה
+                </Label>
+                <Textarea
+                  id="stationNote"
+                  value={stationNote}
+                  onChange={(e) => setStationNote(e.target.value)}
+                  placeholder="הערה מתאימה לתחנה הנוכחית..."
+                  rows={2}
+                  className="bg-background border border-border/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg resize-none"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Files Upload */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
@@ -343,6 +444,23 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
               value={figmaLink}
               onChange={(e) => setFigmaLink(e.target.value)}
               placeholder="https://www.figma.com/..."
+              dir="ltr"
+              className="h-12 bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
+            />
+          </div>
+
+          {/* Process Spec Link */}
+          <div className="space-y-2.5">
+            <Label htmlFor="processSpecLink" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              קישור לאפיון תהליך
+            </Label>
+            <Input
+              id="processSpecLink"
+              type="url"
+              value={processSpecLink}
+              onChange={(e) => setProcessSpecLink(e.target.value)}
+              placeholder="https://..."
               dir="ltr"
               className="h-12 bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
             />
