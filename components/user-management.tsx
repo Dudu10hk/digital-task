@@ -53,7 +53,7 @@ export function UserManagement() {
 
   if (!isAdmin()) return null
 
-  const handleAddUser = () => {
+  const handleAddUser = async () => {
     if (!newName.trim() || !newEmail.trim() || !newPassword.trim()) {
       toast.error("שם, אימייל וסיסמה הם שדות חובה")
       return
@@ -65,31 +65,39 @@ export function UserManagement() {
       return
     }
 
-    addUser({
-      name: newName.trim(),
-      email: newEmail.trim(),
-      password: newPassword.trim(),
-      avatar: newAvatar.trim() || undefined,
-      role: newRole,
-    })
+    try {
+      await addUser({
+        name: newName.trim(),
+        email: newEmail.trim(),
+        password: newPassword.trim(),
+        avatar: newAvatar.trim() || undefined,
+        role: newRole,
+      })
 
-    toast.success(`המשתמש ${newName} נוסף בהצלחה`)
-    
-    // Reset form
-    setNewName("")
-    setNewEmail("")
-    setNewPassword("")
-    setNewAvatar("")
-    setNewRole("user")
+      toast.success(`המשתמש ${newName} נוסף בהצלחה`)
+      
+      // Reset form
+      setNewName("")
+      setNewEmail("")
+      setNewPassword("")
+      setNewAvatar("")
+      setNewRole("user")
+    } catch (error) {
+      toast.error("שגיאה בהוספת משתמש")
+    }
   }
 
-  const handleDeleteUser = (userId: string, userName: string) => {
-    const success = deleteUser(userId)
-    
-    if (!success) {
-      toast.error("לא ניתן למחוק משתמש שמוקצה למשימות פעילות")
-    } else {
-      toast.success(`המשתמש ${userName} הוסר מהמערכת`)
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    try {
+      const success = await deleteUser(userId)
+      
+      if (!success) {
+        toast.error("לא ניתן למחוק משתמש שמוקצה למשימות פעילות")
+      } else {
+        toast.success(`המשתמש ${userName} הוסר מהמערכת`)
+      }
+    } catch (error) {
+      toast.error("שגיאה במחיקת משתמש")
     }
   }
 
@@ -120,7 +128,7 @@ export function UserManagement() {
     setEditAvatar("")
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingUserId) return
 
     if (!editName.trim() || !editEmail.trim() || !editPassword.trim()) {
@@ -128,20 +136,24 @@ export function UserManagement() {
       return
     }
 
-    const success = editUser(editingUserId, {
-      name: editName.trim(),
-      email: editEmail.trim(),
-      password: editPassword.trim(),
-      avatar: editAvatar.trim() || undefined,
-    })
+    try {
+      const success = await editUser(editingUserId, {
+        name: editName.trim(),
+        email: editEmail.trim(),
+        password: editPassword.trim(),
+        avatar: editAvatar.trim() || undefined,
+      })
 
-    if (!success) {
-      toast.error("אימייל זה כבר בשימוש")
-      return
+      if (!success) {
+        toast.error("אימייל זה כבר בשימוש")
+        return
+      }
+
+      toast.success("המשתמש עודכן בהצלחה")
+      handleCancelEdit()
+    } catch (error) {
+      toast.error("שגיאה בעדכון משתמש")
     }
-
-    toast.success("המשתמש עודכן בהצלחה")
-    handleCancelEdit()
   }
 
   return (

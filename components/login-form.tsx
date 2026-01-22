@@ -16,21 +16,23 @@ export function LoginForm() {
   const [error, setError] = useState("")
   const { login, users } = useTaskContext()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    if (!login(email, password)) {
+    const success = await login(email, password)
+    if (!success) {
       setError("אימייל או סיסמה שגויים")
     }
   }
 
-  const handleQuickLogin = (userEmail: string) => {
+  const handleQuickLogin = async (userEmail: string) => {
     const user = users.find((u) => u.email === userEmail)
     if (user) {
       setEmail(userEmail)
       setPassword(user.password)
-      if (!login(userEmail, user.password)) {
+      const success = await login(userEmail, user.password)
+      if (!success) {
         setError("שגיאה בהתחברות")
       }
     }

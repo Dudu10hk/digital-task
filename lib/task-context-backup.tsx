@@ -1,12 +1,12 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { supabase } from "./supabase"
 import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation, StickyNote, ArchivedTask } from "./types"
-import { mockTasks } from "./mock-data"
+import { mockTasks, mockUsers } from "./mock-data"
 
-// Helper functions for localStorage (for non-user data temporarily)
+// Helper functions for localStorage
 const STORAGE_KEYS = {
+  USERS: 'task-management-users',
   TASKS: 'task-management-tasks',
   NOTIFICATIONS: 'task-management-notifications',
   ARCHIVED_TASKS: 'task-management-archived-tasks',
@@ -18,6 +18,8 @@ function loadFromStorage<T>(key: string, defaultValue: T): T {
   try {
     const item = localStorage.getItem(key)
     if (!item) return defaultValue
+    const parsed = JSON.parse(item)
+    // Convert date strings back to Date objects
     return JSON.parse(item, (key, value) => {
       if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
         return new Date(value)
@@ -47,8 +49,7 @@ interface TaskContextType {
   unreadNotificationsCount: number
   archivedTasks: ArchivedTask[]
   stickyNotes: StickyNote[]
-  loading: boolean
-  login: (email: string, password: string) => Promise<boolean>
+  login: (email: string, password: string) => boolean
   logout: () => void
   addTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt" | "history" | "comments" | "order"> & { files?: Task["files"] }) => void
   updateTask: (id: string, updates: Partial<Task>) => void
@@ -65,9 +66,9 @@ interface TaskContextType {
   isAdmin: () => boolean
   updateUserRole: (userId: string, role: "admin" | "user") => void
   reorderTaskInColumn: (taskId: string, newOrder: number, column: BoardColumn) => void
-  addUser: (user: Omit<User, "id">) => Promise<void>
-  deleteUser: (userId: string) => Promise<boolean>
-  editUser: (userId: string, updates: Partial<Omit<User, "id">>) => Promise<boolean>
+  addUser: (user: Omit<User, "id">) => void
+  deleteUser: (userId: string) => boolean
+  editUser: (userId: string, updates: Partial<Omit<User, "id">>) => boolean
   archiveTask: (taskId: string, reason: "completed" | "deleted") => void
   restoreTask: (taskId: string) => void
   addStickyNote: (content: string, color: StickyNote["color"]) => void
@@ -79,38 +80,20 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined)
 
 export function TaskProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>(() => loadFromStorage(STORAGE_KEYS.TASKS, mockTasks))
-  const [users, setUsers] = useState<User[]>([])
+  const [users, setUsers] = useState<User[]>(() => loadFromStorage(STORAGE_KEYS.USERS, mockUsers))
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>(() => loadFromStorage(STORAGE_KEYS.NOTIFICATIONS, []))
   const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>(() => loadFromStorage(STORAGE_KEYS.ARCHIVED_TASKS, []))
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>(() => loadFromStorage(STORAGE_KEYS.STICKY_NOTES, []))
-  const [loading, setLoading] = useState(true)
 
-  // Load users from Supabase on mount
-  useEffect(() => {
-    loadUsersFromSupabase()
-  }, [])
-
-  async function loadUsersFromSupabase() {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: true })
-      
-      if (error) throw error
-      setUsers(data || [])
-    } catch (error) {
-      console.error('Error loading users from Supabase:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Save non-user data to localStorage
+  // Save to localStorage whenever data changes
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.TASKS, tasks)
   }, [tasks])
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.USERS, users)
+  }, [users])
 
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications)
@@ -126,7 +109,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read && n.toUserId === currentUser?.id).length
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = (email: string, password: string): boolean => {
     const user = users.find((u) => u.email === email)
     if (user && user.password === password) {
       setCurrentUser(user)
@@ -166,29 +149,18 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const addUser = async (userData: Omit<User, "id">) => {
+  const addUser = (userData: Omit<User, "id">) => {
     if (!currentUser || currentUser.role !== "admin") return
 
-    try {
-      const newUser: User = {
-        ...userData,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      }
-
-      const { error } = await supabase
-        .from('users')
-        .insert([newUser])
-
-      if (error) throw error
-
-      setUsers((prev) => [...prev, newUser])
-    } catch (error) {
-      console.error('Error adding user:', error)
-      throw error
+    const newUser: User = {
+      ...userData,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
     }
+
+    setUsers((prev) => [...prev, newUser])
   }
 
-  const deleteUser = async (userId: string): Promise<boolean> => {
+  const deleteUser = (userId: string): boolean => {
     if (!currentUser || currentUser.role !== "admin") return false
     
     // Prevent deleting yourself
@@ -205,25 +177,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return false
     }
 
-    try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId)
-
-      if (error) throw error
-
-      // Remove user from users array
-      setUsers((prev) => prev.filter((user) => user.id !== userId))
-      
-      return true
-    } catch (error) {
-      console.error('Error deleting user:', error)
-      return false
-    }
+    // Remove user from users array
+    setUsers((prev) => prev.filter((user) => user.id !== userId))
+    
+    return true
   }
 
-  const editUser = async (userId: string, updates: Partial<Omit<User, "id">>): Promise<boolean> => {
+  const editUser = (userId: string, updates: Partial<Omit<User, "id">>): boolean => {
     if (!currentUser || currentUser.role !== "admin") return false
 
     // Check if email is being changed and if it already exists
@@ -234,28 +194,16 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    try {
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', userId)
+    setUsers((prev) =>
+      prev.map((user) => (user.id === userId ? { ...user, ...updates } : user))
+    )
 
-      if (error) throw error
-
-      setUsers((prev) =>
-        prev.map((user) => (user.id === userId ? { ...user, ...updates } : user))
-      )
-
-      // Update current user if editing self
-      if (currentUser.id === userId) {
-        setCurrentUser((prev) => (prev ? { ...prev, ...updates } : null))
-      }
-
-      return true
-    } catch (error) {
-      console.error('Error editing user:', error)
-      return false
+    // Update current user if editing self
+    if (currentUser.id === userId) {
+      setCurrentUser((prev) => (prev ? { ...prev, ...updates } : null))
     }
+
+    return true
   }
 
   const createNotification = (
@@ -661,7 +609,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         unreadNotificationsCount,
         archivedTasks,
         stickyNotes,
-        loading,
         login,
         logout,
         addTask,
