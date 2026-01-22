@@ -146,3 +146,51 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* RTL Improvements */
+* {
+  direction: rtl;
+}
+
+/* Better text alignment for RTL */
+input[type="text"],
+input[type="email"],
+input[type="search"],
+textarea {
+  text-align: right;
+}
+
+input[type="date"],
+input[type="url"] {
+  text-align: left;
+  direction: ltr;
+}
+
+/* Improved scrollbar for RTL */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+button,
+a {
+  @apply transition-all duration-200;
+}

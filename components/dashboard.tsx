@@ -36,12 +36,12 @@ export function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation Bar */}
-      <header className="bg-card border-b sticky top-0 z-50">
+      <header className="bg-card border-b sticky top-0 z-50 shadow-sm">
         <div className="flex items-center justify-between h-16 px-6">
           {/* Logo & Title */}
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
-              <LayoutGrid className="w-5 h-5 text-primary-foreground" />
+            <div className="w-11 h-11 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
+              <LayoutGrid className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-lg font-bold">לוח משימות</h1>
@@ -55,7 +55,7 @@ export function Dashboard() {
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="חיפוש משימות..."
-                className="pr-10 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20"
+                className="pr-10 bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg h-10"
               />
             </div>
           </div>
@@ -66,7 +66,7 @@ export function Dashboard() {
             <NotificationsPanel />
 
             {/* Add Task Button */}
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2 shadow-md shadow-primary/20">
+            <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/25 h-10 px-5 font-medium rounded-lg">
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">משימה חדשה</span>
             </Button>
@@ -74,10 +74,10 @@ export function Dashboard() {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-3 pr-2">
-                  <Avatar className="w-8 h-8 ring-2 ring-border">
+                <Button variant="ghost" className="gap-3 pr-2 h-10 rounded-lg hover:bg-muted/60">
+                  <Avatar className="w-8 h-8 ring-2 ring-primary/20">
                     <AvatarImage src={currentUser?.avatar || "/placeholder.svg"} />
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-sm font-semibold">
                       <User className="w-4 h-4" />
                     </AvatarFallback>
                   </Avatar>
@@ -106,7 +106,7 @@ export function Dashboard() {
       </header>
 
       {/* Sub Header - View Tabs */}
-      <div className="bg-card border-b px-6 py-3">
+      <div className="bg-card border-b px-6 py-3 shadow-sm">
         <div className="flex items-center gap-2">
           {views.map((view) => (
             <Button
@@ -114,7 +114,7 @@ export function Dashboard() {
               variant={currentView === view.id ? "default" : "ghost"}
               size="sm"
               onClick={() => setCurrentView(view.id)}
-              className={`gap-2 ${currentView === view.id ? "shadow-md shadow-primary/20" : ""}`}
+              className={`gap-2 rounded-lg h-9 font-medium ${currentView === view.id ? "shadow-md shadow-primary/20" : ""}`}
             >
               <view.icon className="w-4 h-4" />
               {view.label}
