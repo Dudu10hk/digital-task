@@ -19,6 +19,7 @@ import { TaskDialog } from "@/components/task-dialog"
 import { NotificationsPanel } from "@/components/notifications-panel"
 import { UserManagement } from "@/components/user-management"
 import { StickyNotesSidebar } from "@/components/sticky-notes-sidebar"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Crown, Archive, BarChart3 } from "lucide-react"
 import { AdvancedFilters, applyFilters, type FilterOptions } from "@/components/advanced-filters"
 import { StatisticsDashboard } from "@/components/statistics-dashboard"
@@ -26,7 +27,7 @@ import { StatisticsDashboard } from "@/components/statistics-dashboard"
 type ViewType = "list" | "board" | "calendar" | "archive" | "statistics"
 
 export function Dashboard() {
-  const { currentUser, logout, tasks, isAdmin } = useTaskContext()
+  const { currentUser, logout, tasks, isAdmin, loading } = useTaskContext()
   const [currentView, setCurrentView] = useState<ViewType>("board")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
@@ -48,6 +49,10 @@ export function Dashboard() {
     { id: "statistics" as ViewType, label: "סטטיסטיקות", icon: BarChart3 },
     { id: "archive" as ViewType, label: "ארכיון", icon: Archive },
   ]
+
+  if (loading) {
+    return <LoadingSpinner fullScreen text="טוען נתונים..." />
+  }
 
   return (
     <div className="min-h-screen bg-background flex" dir="rtl">

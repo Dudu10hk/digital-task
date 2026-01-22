@@ -14,40 +14,6 @@ import {
 } from "./supabase-simple"
 import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation, StickyNote, ArchivedTask } from "./types"
 
-// Helper functions for localStorage (for non-user data temporarily)
-const STORAGE_KEYS = {
-  TASKS: 'task-management-tasks',
-  NOTIFICATIONS: 'task-management-notifications',
-  ARCHIVED_TASKS: 'task-management-archived-tasks',
-  STICKY_NOTES: 'task-management-sticky-notes',
-}
-
-function loadFromStorage<T>(key: string, defaultValue: T): T {
-  if (typeof window === 'undefined') return defaultValue
-  try {
-    const item = localStorage.getItem(key)
-    if (!item) return defaultValue
-    return JSON.parse(item, (key, value) => {
-      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-        return new Date(value)
-      }
-      return value
-    })
-  } catch (error) {
-    console.error(`Error loading ${key} from localStorage:`, error)
-    return defaultValue
-  }
-}
-
-function saveToStorage<T>(key: string, value: T): void {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.setItem(key, JSON.stringify(value))
-  } catch (error) {
-    console.error(`Error saving ${key} to localStorage:`, error)
-  }
-}
-
 interface TaskContextType {
   tasks: Task[]
   users: User[]
@@ -110,7 +76,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       if (error) throw error
       setUsers(data || [])
     } catch (error) {
-      console.error('Error loading users from Supabase:', error)
+      // Error loading users - continuing with empty list
     } finally {
       setLoading(false)
     }
@@ -168,7 +134,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setArchivedTasks(archivedData)
 
     } catch (error) {
-      console.error('Error loading data from Supabase:', error)
+      // Error loading data - continuing with empty data
     } finally {
       setLoading(false)
     }
@@ -236,7 +202,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
       setUsers((prev) => [...prev, newUser])
     } catch (error) {
-      console.error('Error adding user:', error)
+      // Error adding user
       throw error
     }
   }
@@ -271,7 +237,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       
       return true
     } catch (error) {
-      console.error('Error deleting user:', error)
+      // Error deleting user
       return false
     }
   }
@@ -306,7 +272,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
       return true
     } catch (error) {
-      console.error('Error editing user:', error)
+      // Error editing user
       return false
     }
   }
