@@ -7,22 +7,103 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useTaskContext } from "@/lib/task-context"
-import { AlertCircle, LayoutGrid, ArrowLeft, CheckCircle2, Users, Clock } from "lucide-react"
+import { AlertCircle, LayoutGrid, ArrowLeft, ArrowRight, CheckCircle2, Users, Clock, Mail, ShieldCheck } from "lucide-react"
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
+import { toast } from "sonner"
+
+type LoginStep = "email" | "otp"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [otp, setOtp] = useState("")
   const [error, setError] = useState("")
-  const { login } = useTaskContext()
+  const [step, setStep] = useState<LoginStep>("email")
+  const [loading, setLoading] = useState(false)
+  const { loginWithOTP } = useTaskContext()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setLoading(true)
 
-    const success = await login(email, password)
-    if (!success) {
-      setError("אימייל או סיסמה שגויים")
+    try {
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'שגיאה בשליחת הקוד')
+        setLoading(false)
+        return
+      }
+
+      toast.success('קוד האימות נשלח למייל שלך!')
+      setStep("otp")
+    } catch (err) {
+      setError('שגיאה בשליחת הקוד. נסה שוב.')
+    } finally {
+      setLoading(false)
     }
+  }
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    if (otp.length !== 6) {
+      setError('יש להזין קוד בן 6 ספרות')
+      setLoading(false)
+      return
+    }
+
+    try {
+      const success = await loginWithOTP(email, otp)
+      
+      if (!success) {
+        setError('קוד שגוי או פג תוקף')
+        setOtp("")
+      }
+    } catch (err) {
+      setError('שגיאה באימות הקוד. נסה שוב.')
+      setOtp("")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResendOTP = async () => {
+    setOtp("")
+    setError("")
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+
+      if (response.ok) {
+        toast.success('קוד חדש נשלח למייל שלך!')
+      } else {
+        toast.error('שגיאה בשליחת קוד חדש')
+      }
+    } catch (err) {
+      toast.error('שגיאה בשליחת קוד חדש')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBackToEmail = () => {
+    setStep("email")
+    setOtp("")
+    setError("")
   }
 
   const features = [
@@ -90,54 +171,138 @@ export function LoginForm() {
 
           {/* Header */}
           <div className="text-center lg:text-right">
-            <h1 className="text-3xl font-bold tracking-tight">ברוכים הבאים</h1>
-            <p className="text-muted-foreground mt-2">התחברו כדי להמשיך לניהול הפרויקטים</p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              {step === "email" ? "ברוכים הבאים" : "אימות זהות"}
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              {step === "email" 
+                ? "התחברו כדי להמשיך לניהול הפרויקטים" 
+                : "הזן את הקוד ששלחנו למייל שלך"}
+            </p>
           </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-semibold">
-                אימייל
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-12 text-right bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 text-base"
-                dir="ltr"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-semibold">
-                סיסמה
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-12 bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 text-base"
-              />
-            </div>
-
-            {error && (
-              <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-xl">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{error}</span>
+          {/* Step 1: Email */}
+          {step === "email" && (
+            <form onSubmit={handleSendOTP} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  אימייל
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={loading}
+                  className="h-12 text-right bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 text-base"
+                  dir="ltr"
+                />
               </div>
-            )}
 
-            <Button type="submit" className="w-full h-12 font-semibold text-base shadow-lg shadow-primary/25 gap-2">
-              התחברות
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </form>
+              {error && (
+                <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-xl">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full h-12 font-semibold text-base shadow-lg shadow-primary/25 gap-2"
+              >
+                {loading ? "שולח קוד..." : "שלח קוד אימות"}
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+
+              <div className="flex items-center gap-2 p-4 bg-muted/30 rounded-xl text-sm text-muted-foreground">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                <span>נשלח קוד בן 6 ספרות למייל שלך</span>
+              </div>
+            </form>
+          )}
+
+          {/* Step 2: OTP */}
+          {step === "otp" && (
+            <form onSubmit={handleVerifyOTP} className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-semibold">קוד אימות</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToEmail}
+                    className="gap-1 text-xs"
+                  >
+                    <ArrowRight className="w-3 h-3" />
+                    שנה אימייל
+                  </Button>
+                </div>
+
+                <div className="text-center space-y-4">
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-xl">
+                    <Mail className="w-4 h-4" />
+                    <span dir="ltr">{email}</span>
+                  </div>
+
+                  <InputOTP
+                    maxLength={6}
+                    value={otp}
+                    onChange={setOtp}
+                    disabled={loading}
+                    dir="ltr"
+                  >
+                    <InputOTPGroup className="gap-2 mx-auto">
+                      <InputOTPSlot index={0} className="w-12 h-14 text-xl" />
+                      <InputOTPSlot index={1} className="w-12 h-14 text-xl" />
+                      <InputOTPSlot index={2} className="w-12 h-14 text-xl" />
+                      <InputOTPSlot index={3} className="w-12 h-14 text-xl" />
+                      <InputOTPSlot index={4} className="w-12 h-14 text-xl" />
+                      <InputOTPSlot index={5} className="w-12 h-14 text-xl" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-xl">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                disabled={loading || otp.length !== 6}
+                className="w-full h-12 font-semibold text-base shadow-lg shadow-primary/25 gap-2"
+              >
+                {loading ? "מאמת..." : "אמת והתחבר"}
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+
+              <div className="text-center">
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  onClick={handleResendOTP}
+                  disabled={loading}
+                  className="text-xs"
+                >
+                  לא קיבלת קוד? שלח שוב
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-xl text-sm text-amber-700 dark:text-amber-400">
+                <Clock className="w-4 h-4 shrink-0" />
+                <span>הקוד תקף ל-10 דקות</span>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>

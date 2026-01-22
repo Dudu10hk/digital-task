@@ -25,6 +25,7 @@ interface TaskContextType {
   stickyNotes: StickyNote[]
   loading: boolean
   login: (email: string, password: string) => Promise<boolean>
+  loginWithOTP: (email: string, code: string) => Promise<boolean>
   logout: () => void
   addTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt" | "history" | "comments" | "order"> & { files?: Task["files"] }) => void
   updateTask: (id: string, updates: Partial<Task>) => void
@@ -180,6 +181,38 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return true
     }
     return false
+  }
+
+  const loginWithOTP = async (email: string, code: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code })
+      })
+
+      if (!response.ok) {
+        return false
+      }
+
+      const { user } = await response.json()
+      
+      if (user) {
+        // Update users list if needed
+        const existingUserIndex = users.findIndex(u => u.id === user.id)
+        if (existingUserIndex === -1) {
+          setUsers(prev => [...prev, user])
+        }
+        
+        setCurrentUser(user)
+        return true
+      }
+      
+      return false
+    } catch (error) {
+      console.error('Login with OTP error:', error)
+      return false
+    }
   }
 
   const logout = () => {
@@ -695,6 +728,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         stickyNotes,
         loading,
         login,
+        loginWithOTP,
         logout,
         addTask,
         updateTask,

@@ -37,12 +37,12 @@ import type { UserRole } from "@/lib/types"
 import { toast } from "sonner"
 
 export function UserManagement() {
-  const { users, currentUser, updateUserRole, isAdmin, addUser, deleteUser, editUser, tasks } = useTaskContext()
+  const { users, currentUser, updateUserRole, isAdmin, deleteUser, editUser, tasks } = useTaskContext()
   const [newName, setNewName] = useState("")
   const [newEmail, setNewEmail] = useState("")
-  const [newPassword, setNewPassword] = useState("")
   const [newAvatar, setNewAvatar] = useState("")
   const [newRole, setNewRole] = useState<UserRole>("user")
+  const [isInviting, setIsInviting] = useState(false)
   
   // Edit user state
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
@@ -53,9 +53,9 @@ export function UserManagement() {
 
   if (!isAdmin()) return null
 
-  const handleAddUser = async () => {
-    if (!newName.trim() || !newEmail.trim() || !newPassword.trim()) {
-      toast.error("שם, אימייל וסיסמה הם שדות חובה")
+  const handleInviteUser = async () => {
+    if (!newName.trim() || !newEmail.trim()) {
+      toast.error("שם ואימייל הם שדות חובה")
       return
     }
 
@@ -65,25 +65,45 @@ export function UserManagement() {
       return
     }
 
+    setIsInviting(true)
+
     try {
-      await addUser({
-        name: newName.trim(),
-        email: newEmail.trim(),
-        password: newPassword.trim(),
-        avatar: newAvatar.trim() || undefined,
-        role: newRole,
+      const response = await fetch('/api/auth/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newName.trim(),
+          email: newEmail.trim(),
+          role: newRole,
+          adminId: currentUser?.id
+        })
       })
 
-      toast.success(`המשתמש ${newName} נוסף בהצלחה`)
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast.error(data.error || "שגיאה בשליחת ההזמנה")
+        return
+      }
+
+      if (data.warning) {
+        toast.warning(`${data.warning}. ניתן לשלוח הזמנה שוב מניהול המשתמשים.`)
+      } else {
+        toast.success(`הזמנה נשלחה בהצלחה ל-${newEmail}! 📧`)
+      }
+      
+      // Reload users to show the new user
+      window.location.reload()
       
       // Reset form
       setNewName("")
       setNewEmail("")
-      setNewPassword("")
       setNewAvatar("")
       setNewRole("user")
     } catch (error) {
-      toast.error("שגיאה בהוספת משתמש")
+      toast.error("שגיאה בשליחת ההזמנה")
+    } finally {
+      setIsInviting(false)
     }
   }
 
@@ -176,8 +196,11 @@ export function UserManagement() {
           <div className="space-y-3 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20">
             <Label className="text-base font-semibold flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
-              הוספת משתמש חדש
+              הזמנת משתמש חדש למערכת
             </Label>
+            <div className="text-sm text-muted-foreground mb-3 p-3 bg-background/50 rounded-lg">
+              <p>המשתמש יקבל מייל עם קוד אימות להתחברות ראשונה. בכל כניסה למערכת יישלח קוד חדש למייל שלו.</p>
+            </div>
             <div className="grid gap-3">
               <div className="space-y-2">
                 <Label htmlFor="newName" className="text-sm">שם מלא *</Label>
@@ -186,6 +209,7 @@ export function UserManagement() {
                   placeholder="הזן שם מלא"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
+                  disabled={isInviting}
                   className="bg-background h-11"
                 />
               </div>
@@ -197,19 +221,9 @@ export function UserManagement() {
                   placeholder="user@example.com"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
+                  disabled={isInviting}
                   className="bg-background h-11"
                   dir="ltr"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="newPassword" className="text-sm">סיסמה *</Label>
-                <Input
-                  id="newPassword"
-                  type="text"
-                  placeholder="הזן סיסמה"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="bg-background h-11"
                 />
               </div>
               <div className="space-y-2">
@@ -219,13 +233,14 @@ export function UserManagement() {
                   placeholder="https://..."
                   value={newAvatar}
                   onChange={(e) => setNewAvatar(e.target.value)}
+                  disabled={isInviting}
                   className="bg-background h-11"
                   dir="ltr"
                 />
               </div>
               <div className="space-y-2">
                 <Label className="text-sm">הרשאות</Label>
-                <Select value={newRole} onValueChange={(v: UserRole) => setNewRole(v)}>
+                <Select value={newRole} onValueChange={(v: UserRole) => setNewRole(v)} disabled={isInviting}>
                   <SelectTrigger className="bg-background h-11">
                     <SelectValue />
                   </SelectTrigger>
@@ -251,9 +266,13 @@ export function UserManagement() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleAddUser} className="w-full gap-2 h-11 font-semibold">
+              <Button 
+                onClick={handleInviteUser} 
+                disabled={isInviting}
+                className="w-full gap-2 h-11 font-semibold"
+              >
                 <UserPlus className="w-4 h-4" />
-                הוסף משתמש
+                {isInviting ? "שולח הזמנה..." : "שלח הזמנה למייל"}
               </Button>
             </div>
           </div>
