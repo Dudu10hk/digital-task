@@ -2,8 +2,17 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { supabase } from "./supabase"
+import {
+  loadTasks,
+  saveTasks,
+  loadNotifications,
+  saveNotifications,
+  loadStickyNotes,
+  saveStickyNotes,
+  loadArchivedTasks,
+  saveArchivedTasks
+} from "./supabase-simple"
 import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation, StickyNote, ArchivedTask } from "./types"
-import { mockTasks } from "./mock-data"
 
 // Helper functions for localStorage (for non-user data temporarily)
 const STORAGE_KEYS = {
@@ -78,12 +87,12 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | undefined>(undefined)
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const [tasks, setTasks] = useState<Task[]>(() => loadFromStorage(STORAGE_KEYS.TASKS, mockTasks))
+  const [tasks, setTasks] = useState<Task[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [notifications, setNotifications] = useState<Notification[]>(() => loadFromStorage(STORAGE_KEYS.NOTIFICATIONS, []))
-  const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>(() => loadFromStorage(STORAGE_KEYS.ARCHIVED_TASKS, []))
-  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>(() => loadFromStorage(STORAGE_KEYS.STICKY_NOTES, []))
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>([])
+  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([])
   const [loading, setLoading] = useState(true)
 
   // Load users from Supabase on mount
@@ -107,22 +116,89 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Save non-user data to localStorage
+  // Load ALL data from Supabase when user logs in
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.TASKS, tasks)
-  }, [tasks])
+    if (currentUser) {
+      loadAllDataFromSupabase()
+    }
+  }, [currentUser])
+
+  // Auto-save to Supabase when data changes
+  useEffect(() => {
+    if (currentUser && tasks.length > 0) {
+      saveTasks(tasks)
+    }
+  }, [tasks, currentUser])
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications)
-  }, [notifications])
+    if (currentUser && notifications.length >= 0) {
+      saveNotifications(notifications, currentUser.id)
+    }
+  }, [notifications, currentUser])
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.ARCHIVED_TASKS, archivedTasks)
-  }, [archivedTasks])
+    if (currentUser && stickyNotes.length >= 0) {
+      saveStickyNotes(stickyNotes, currentUser.id)
+    }
+  }, [stickyNotes, currentUser])
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.STICKY_NOTES, stickyNotes)
-  }, [stickyNotes])
+    if (currentUser && archivedTasks.length >= 0) {
+      saveArchivedTasks(archivedTasks)
+    }
+  }, [archivedTasks, currentUser])
+
+  async function loadAllDataFromSupabase() {
+    if (!currentUser) return
+
+    try {
+      setLoading(true)
+      
+      // Load all data in parallel
+      const [tasksData, notificationsData, notesData, archivedData] = await Promise.all([
+        loadTasks(),
+        loadNotifications(currentUser.id),
+        loadStickyNotes(currentUser.id),
+        loadArchivedTasks()
+      ])
+
+      setTasks(tasksData)
+      setNotifications(notificationsData)
+      setStickyNotes(notesData)
+      setArchivedTasks(archivedData)
+
+    } catch (error) {
+      console.error('Error loading data from Supabase:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+    if (!currentUser) return
+
+    try {
+      setLoading(true)
+      
+      // Load all data in parallel
+      const [tasksData, notificationsData, notesData, archivedData] = await Promise.all([
+        loadTasks(),
+        loadNotifications(currentUser.id),
+        loadStickyNotes(currentUser.id),
+        loadArchivedTasks()
+      ])
+
+      setTasks(tasksData)
+      setNotifications(notificationsData)
+      setStickyNotes(notesData)
+      setArchivedTasks(archivedData)
+
+    } catch (error) {
+      console.error('Error loading data from Supabase:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Remove localStorage saving - everything is in Supabase now
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read && n.toUserId === currentUser?.id).length
 
@@ -130,6 +206,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const user = users.find((u) => u.email === email)
     if (user && user.password === password) {
       setCurrentUser(user)
+      // Data will be loaded by useEffect when currentUser changes
       return true
     }
     return false
