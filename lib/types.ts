@@ -95,3 +95,18 @@ export interface Task {
   updatedAt: Date
   order: number
 }
+
+export interface StickyNote {
+  id: string
+  userId: string
+  content: string
+  color: "yellow" | "blue" | "green" | "pink" | "purple"
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ArchivedTask extends Task {
+  archivedAt: Date
+  archivedBy: string
+  archiveReason: "completed" | "deleted"
+}

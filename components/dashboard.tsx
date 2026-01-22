@@ -14,13 +14,15 @@ import {
 import { ListView } from "@/components/views/list-view"
 import { BoardView } from "@/components/views/board-view"
 import { CalendarView } from "@/components/views/calendar-view"
+import { ArchiveView } from "@/components/views/archive-view"
 import { TaskDialog } from "@/components/task-dialog"
 import { NotificationsPanel } from "@/components/notifications-panel"
 import { UserManagement } from "@/components/user-management"
-import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Search, Crown } from "lucide-react"
+import { StickyNotesSidebar } from "@/components/sticky-notes-sidebar"
+import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Search, Crown, Archive } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
-type ViewType = "list" | "board" | "calendar"
+type ViewType = "list" | "board" | "calendar" | "archive"
 
 export function Dashboard() {
   const { currentUser, logout, tasks, isAdmin } = useTaskContext()
@@ -31,12 +33,18 @@ export function Dashboard() {
     { id: "board" as ViewType, label: "בורד", icon: Columns3 },
     { id: "list" as ViewType, label: "רשימה", icon: List },
     { id: "calendar" as ViewType, label: "לוח שנה", icon: Calendar },
+    { id: "archive" as ViewType, label: "ארכיון", icon: Archive },
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Navigation Bar */}
-      <header className="bg-card border-b sticky top-0 z-50 shadow-sm">
+    <div className="min-h-screen bg-background flex">
+      {/* Sticky Notes Sidebar */}
+      <StickyNotesSidebar />
+      
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Navigation Bar */}
+        <header className="bg-card border-b sticky top-0 z-50 shadow-sm">
         <div className="flex items-center justify-between h-16 px-6">
           {/* Logo & Title */}
           <div className="flex items-center gap-4">
@@ -128,10 +136,12 @@ export function Dashboard() {
         {currentView === "list" && <ListView />}
         {currentView === "board" && <BoardView />}
         {currentView === "calendar" && <CalendarView />}
+        {currentView === "archive" && <ArchiveView />}
       </main>
 
       {/* Create Task Dialog */}
       <TaskDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} mode="create" />
+      </div>
     </div>
   )
 }

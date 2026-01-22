@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, type ReactNode } from "react"
-import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation } from "./types"
+import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation, StickyNote, ArchivedTask } from "./types"
 import { mockTasks, mockUsers } from "./mock-data"
 
 interface TaskContextType {
@@ -10,6 +10,8 @@ interface TaskContextType {
   currentUser: User | null
   notifications: Notification[]
   unreadNotificationsCount: number
+  archivedTasks: ArchivedTask[]
+  stickyNotes: StickyNote[]
   login: (email: string, password: string) => boolean
   logout: () => void
   addTask: (task: Omit<Task, "id" | "createdAt" | "updatedAt" | "history" | "comments" | "order"> & { files?: Task["files"] }) => void
@@ -30,6 +32,11 @@ interface TaskContextType {
   addUser: (user: Omit<User, "id">) => void
   deleteUser: (userId: string) => boolean
   editUser: (userId: string, updates: Partial<Omit<User, "id">>) => boolean
+  archiveTask: (taskId: string, reason: "completed" | "deleted") => void
+  restoreTask: (taskId: string) => void
+  addStickyNote: (content: string, color: StickyNote["color"]) => void
+  updateStickyNote: (noteId: string, content: string) => void
+  deleteStickyNote: (noteId: string) => void
 }
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined)
@@ -39,6 +46,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>(mockUsers)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>([])
+  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([])
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read && n.toUserId === currentUser?.id).length
 
@@ -270,8 +279,71 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     )
   }
 
+  const archiveTask = (taskId: string, reason: "completed" | "deleted") => {
+    if (!currentUser) return
+
+    const task = tasks.find((t) => t.id === taskId)
+    if (!task) return
+
+    const archivedTask: ArchivedTask = {
+      ...task,
+      archivedAt: new Date(),
+      archivedBy: currentUser.id,
+      archiveReason: reason,
+    }
+
+    setArchivedTasks((prev) => [archivedTask, ...prev])
+    setTasks((prev) => prev.filter((t) => t.id !== taskId))
+  }
+
+  const restoreTask = (taskId: string) => {
+    const archivedTask = archivedTasks.find((t) => t.id === taskId)
+    if (!archivedTask) return
+
+    const { archivedAt, archivedBy, archiveReason, ...taskData } = archivedTask
+    
+    // Restore to original column or todo
+    const restoredTask: Task = {
+      ...taskData,
+      column: archiveReason === "deleted" ? "todo" : taskData.column,
+      updatedAt: new Date(),
+    }
+
+    setTasks((prev) => [...prev, restoredTask])
+    setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
+  }
+
   const deleteTask = (id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id))
+    archiveTask(id, "deleted")
+  }
+
+  const addStickyNote = (content: string, color: StickyNote["color"]) => {
+    if (!currentUser) return
+
+    const newNote: StickyNote = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      userId: currentUser.id,
+      content,
+      color,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+
+    setStickyNotes((prev) => [newNote, ...prev])
+  }
+
+  const updateStickyNote = (noteId: string, content: string) => {
+    setStickyNotes((prev) =>
+      prev.map((note) =>
+        note.id === noteId
+          ? { ...note, content, updatedAt: new Date() }
+          : note
+      )
+    )
+  }
+
+  const deleteStickyNote = (noteId: string) => {
+    setStickyNotes((prev) => prev.filter((note) => note.id !== noteId))
   }
 
   const addComment = (taskId: string, content: string, taggedUserIds?: string[]) => {
@@ -333,6 +405,12 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const tasksInColumn = tasks.filter(t => t.column === column)
     const maxOrder = tasksInColumn.length > 0 ? Math.max(...tasksInColumn.map(t => t.order)) : 0
     updateTask(taskId, { column, order: maxOrder + 1 })
+    
+    // Auto-archive when moved to done
+    if (column === "done") {
+      // Use setTimeout to allow updateTask to complete first
+      setTimeout(() => archiveTask(taskId, "completed"), 100)
+    }
   }
 
   const reorderTaskInColumn = (taskId: string, newOrder: number, column: BoardColumn) => {
@@ -471,6 +549,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         currentUser,
         notifications,
         unreadNotificationsCount,
+        archivedTasks,
+        stickyNotes,
         login,
         logout,
         addTask,
@@ -491,6 +571,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addUser,
         deleteUser,
         editUser,
+        archiveTask,
+        restoreTask,
+        addStickyNote,
+        updateStickyNote,
+        deleteStickyNote,
       }}
     >
       {children}
