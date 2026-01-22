@@ -545,11 +545,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const maxOrder = tasksInColumn.length > 0 ? Math.max(...tasksInColumn.map(t => t.order)) : 0
     updateTask(taskId, { column, order: maxOrder + 1 })
     
-    // Auto-archive when moved to done
-    if (column === "done") {
-      // Use setTimeout to allow updateTask to complete first
-      setTimeout(() => archiveTask(taskId, "completed"), 100)
-    }
+    // הסרתי את הארכיון האוטומטי!
+    // עכשיו רק המשתמש יכול להעביר לארכיון באופן ידני
   }
 
   const reorderTaskInColumn = (taskId: string, newOrder: number, column: BoardColumn) => {

@@ -12,7 +12,7 @@ import { TaskDetailSheet } from "@/components/task-detail-sheet"
 import { useTaskContext } from "@/lib/task-context"
 import { statusConfig, inProgressStationConfig } from "@/lib/status-config"
 import type { Task } from "@/lib/types"
-import { MoreHorizontal, Calendar, Trash2, Edit, Figma, FileText, MessageSquare, Wrench, Palette, Code, TestTube, Search, Users, Layers } from "lucide-react"
+import { MoreHorizontal, Calendar, Trash2, Edit, Figma, FileText, MessageSquare, Wrench, Palette, Code, TestTube, Search, Users, Layers, Archive } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 
@@ -25,7 +25,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: TaskCardProps) {
-  const { deleteTask, getUserById, canEditTask } = useTaskContext()
+  const { deleteTask, getUserById, canEditTask, archiveTask } = useTaskContext()
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const canEdit = canEditTask(task)
 
@@ -90,6 +90,15 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
                     <Edit className="w-4 h-4" />
                     עריכה
                   </DropdownMenuItem>
+                  {task.column === "done" && (
+                    <DropdownMenuItem
+                      onClick={() => archiveTask(task.id, "completed")}
+                      className="gap-2 text-emerald-600 focus:text-emerald-600"
+                    >
+                      <Archive className="w-4 h-4" />
+                      העבר לארכיון
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     onClick={() => deleteTask(task.id)}
                     className="gap-2 text-destructive focus:text-destructive"

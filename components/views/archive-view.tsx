@@ -176,24 +176,24 @@ export function ArchiveView() {
 
                   {/* Metadata */}
                   <div className="flex flex-wrap gap-4 text-sm">
-                    {task.assigneeName && (
+                    {task.assigneeId && (
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-muted-foreground" />
                         <span className="text-muted-foreground">אחראי:</span>
-                        <span className="font-medium">{task.assigneeName}</span>
+                        <span className="font-medium">{getUserById(task.assigneeId)?.name || "לא ידוע"}</span>
                       </div>
                     )}
                     {task.dueDate && (
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span className="text-muted-foreground">תאריך יעד:</span>
-                        <span>{format(task.dueDate, "dd/MM/yyyy", { locale: he })}</span>
+                        <span>{format(new Date(task.dueDate), "dd/MM/yyyy", { locale: he })}</span>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-muted-foreground" />
                       <span className="text-muted-foreground">אורכב:</span>
-                      <span>{format(task.archivedAt, "dd/MM/yyyy HH:mm", { locale: he })}</span>
+                      <span>{format(new Date(task.archivedAt), "dd/MM/yyyy HH:mm", { locale: he })}</span>
                     </div>
                     {archivedByUser && (
                       <div className="flex items-center gap-2">
@@ -224,12 +224,12 @@ export function ArchiveView() {
                                 src={getUserById(entry.userId)?.avatar || "/placeholder.svg"}
                               />
                               <AvatarFallback className="text-xs">
-                                {entry.userName.split(" ").map((n) => n[0]).join("")}
+                                {entry.userName?.split(" ").map((n) => n[0]).join("") || "?"}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <p className="text-muted-foreground">
-                                <span className="font-medium text-foreground">{entry.userName}</span>
+                                <span className="font-medium text-foreground">{entry.userName || "משתמש"}</span>
                                 {" "}
                                 {entry.action === "created" && "יצר/ה את המשימה"}
                                 {entry.action === "updated" && `עדכן/ה ${entry.field || ""}`}
@@ -240,7 +240,7 @@ export function ArchiveView() {
                                 {entry.action === "station_changed" && "שינה/תה תחנה"}
                               </p>
                               <p className="text-xs text-muted-foreground/70">
-                                {format(entry.timestamp, "dd/MM/yyyy HH:mm", { locale: he })}
+                                {format(new Date(entry.timestamp), "dd/MM/yyyy HH:mm", { locale: he })}
                               </p>
                             </div>
                           </div>
