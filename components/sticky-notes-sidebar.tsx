@@ -82,16 +82,16 @@ export function StickyNotesSidebar() {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed right-4 top-20 z-40 w-10 h-10 rounded-full shadow-lg bg-card border transition-all ${
-          isOpen ? "translate-x-[-280px]" : ""
+        className={`fixed right-2 sm:right-4 top-16 sm:top-20 z-40 w-9 h-9 sm:w-10 sm:h-10 rounded-full shadow-lg bg-card border transition-all ${
+          isOpen ? "translate-x-[-260px] sm:translate-x-[-280px]" : ""
         }`}
       >
-        {isOpen ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+        {isOpen ? <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" /> : <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />}
       </Button>
 
       {/* Sidebar */}
       <div
-        className={`fixed right-0 top-0 h-full w-[280px] bg-card border-l shadow-xl z-30 transition-transform duration-300 ${
+        className={`fixed right-0 top-0 h-full w-[260px] sm:w-[280px] bg-card border-l shadow-xl z-30 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

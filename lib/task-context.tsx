@@ -1,6 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from "react"
+import { toast } from "sonner"
 import { supabase } from "./supabase"
 import {
   loadTasks,
@@ -142,7 +143,28 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   // Remove localStorage saving - everything is in Supabase now
 
-  const unreadNotificationsCount = notifications.filter((n) => !n.read && n.toUserId === currentUser?.id).length
+  const unreadNotificationsCount = useMemo(
+    () => notifications.filter((n) => !n.read && n.toUserId === currentUser?.id).length,
+    [notifications, currentUser?.id]
+  )
+
+  const getUserById = useCallback((id: string): User | undefined => {
+    return users.find((u) => u.id === id)
+  }, [users])
+
+  const isAdmin = useCallback((): boolean => {
+    return currentUser?.role === "admin"
+  }, [currentUser?.role])
+
+  const canEditTask = useCallback((task: Task): boolean => {
+    if (!currentUser) return false
+    if (currentUser.role === "admin") return true
+    if (task.assigneeId === currentUser.id) return true
+    if (task.handlerId === currentUser.id) return true
+    if (task.taggedUserIds.includes(currentUser.id)) return true
+    if (task.createdBy === currentUser.id) return true
+    return false
+  }, [currentUser])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     const user = users.find((u) => u.email === email)
@@ -156,24 +178,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setCurrentUser(null)
-  }
-
-  const getUserById = (id: string): User | undefined => {
-    return users.find((u) => u.id === id)
-  }
-
-  const isAdmin = (): boolean => {
-    return currentUser?.role === "admin"
-  }
-
-  const canEditTask = (task: Task): boolean => {
-    if (!currentUser) return false
-    if (currentUser.role === "admin") return true
-    if (task.assigneeId === currentUser.id) return true
-    if (task.handlerId === currentUser.id) return true
-    if (task.taggedUserIds.includes(currentUser.id)) return true
-    if (task.createdBy === currentUser.id) return true
-    return false
   }
 
   const updateUserRole = (userId: string, role: "admin" | "user") => {
@@ -328,6 +332,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       ],
     }
     setTasks((prev) => [...prev, newTask])
+    toast.success(`המשימה "${newTask.title}" נוצרה בהצלחה`)
 
     if (taskData.assigneeId && taskData.assigneeId !== currentUser.id) {
       createNotification(
@@ -423,6 +428,10 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     setArchivedTasks((prev) => [archivedTask, ...prev])
     setTasks((prev) => prev.filter((t) => t.id !== taskId))
+    
+    if (reason === "completed") {
+      toast.success(`המשימה "${task.title}" הועברה לארכיון`)
+    }
   }
 
   const restoreTask = (taskId: string) => {
@@ -440,6 +449,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
     setTasks((prev) => [...prev, restoredTask])
     setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
+    toast.success(`המשימה "${restoredTask.title}" שוחזרה בהצלחה`)
   }
 
   const deleteTask = (id: string) => {

@@ -63,7 +63,7 @@ export function Dashboard() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navigation Bar */}
         <header className="bg-card border-b sticky top-0 z-50 shadow-sm">
-        <div className="flex items-center justify-between h-16 px-6">
+        <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6">
           {/* Logo & Title */}
           <div className="flex items-center gap-4">
             <div className="w-11 h-11 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
@@ -126,25 +126,25 @@ export function Dashboard() {
       </header>
 
       {/* Sub Header - View Tabs */}
-      <div className="bg-card border-b px-6 py-3 shadow-sm">
-        <div className="flex items-center gap-2">
+      <div className="bg-card border-b px-4 sm:px-6 py-2 sm:py-3 shadow-sm overflow-x-auto">
+        <div className="flex items-center gap-1 sm:gap-2 min-w-max">
           {views.map((view) => (
             <Button
               key={view.id}
               variant={currentView === view.id ? "default" : "ghost"}
               size="sm"
               onClick={() => setCurrentView(view.id)}
-              className={`gap-2 rounded-lg h-9 font-medium ${currentView === view.id ? "shadow-md shadow-primary/20" : ""}`}
+              className={`gap-1.5 sm:gap-2 rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium ${currentView === view.id ? "shadow-md shadow-primary/20" : ""}`}
             >
-              <view.icon className="w-4 h-4" />
-              {view.label}
+              <view.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden xs:inline">{view.label}</span>
             </Button>
           ))}
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         {currentView === "list" && <ListView filteredTasks={filteredTasks} />}
         {currentView === "board" && <BoardView filteredTasks={filteredTasks} />}
         {currentView === "calendar" && <CalendarView filteredTasks={filteredTasks} />}

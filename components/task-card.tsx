@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -199,3 +199,6 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
     </>
   )
 }
+
+// Memoize to prevent unnecessary re-renders
+export default memo(TaskCard)
