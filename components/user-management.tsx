@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Users, Shield, User, Crown, Trash2, UserPlus, Edit } from "lucide-react"
+import { Users, Shield, User, Crown, Trash2, UserPlus, Edit, Eye } from "lucide-react"
 import type { UserRole } from "@/lib/types"
 import { toast } from "sonner"
 
@@ -236,6 +236,12 @@ export function UserManagement() {
                         משתמש רגיל
                       </div>
                     </SelectItem>
+                    <SelectItem value="viewer">
+                      <div className="flex items-center gap-2">
+                        <Eye className="w-4 h-4 text-sky-500" />
+                        צופה (נעול)
+                      </div>
+                    </SelectItem>
                     <SelectItem value="admin">
                       <div className="flex items-center gap-2">
                         <Crown className="w-4 h-4 text-amber-500" />
@@ -255,9 +261,10 @@ export function UserManagement() {
           {/* Users List */}
           <div className="space-y-3">
             <Label className="text-base font-semibold">משתמשים קיימים</Label>
-            <div className="text-sm text-muted-foreground mb-4">
-              <p>מנהל מערכת יכול לערוך כל משימה במערכת.</p>
-              <p>משתמש רגיל יכול לערוך רק משימות שהוא אחראי עליהן או מתויג בהן.</p>
+            <div className="text-sm text-muted-foreground mb-4 space-y-1">
+              <p>• <strong>מנהל מערכת:</strong> שליטה מלאה, כולל ניהול משתמשים ועריכת כל המשימות.</p>
+              <p>• <strong>משתמש רגיל:</strong> יכול לערוך משימות שהוא אחראי עליהן, מטפל בהן או מתויג בהן.</p>
+              <p>• <strong>צופה:</strong> גישה לקריאה בלבד (נעול). לא יכול לבצע שינויים או להזיז משימות.</p>
             </div>
             <div className="space-y-3">
               {users.map((user) => (
@@ -338,7 +345,6 @@ export function UserManagement() {
                               )}
                             </div>
                             <span className="text-sm text-muted-foreground">{user.email}</span>
-                            <span className="text-xs text-muted-foreground/70 block mt-0.5">סיסמה: {user.password}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -351,16 +357,22 @@ export function UserManagement() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="admin">
-                                <div className="flex items-center gap-2">
-                                  <Crown className="w-4 h-4 text-amber-500" />
-                                  מנהל מערכת
-                                </div>
-                              </SelectItem>
                               <SelectItem value="user">
                                 <div className="flex items-center gap-2">
                                   <User className="w-4 h-4 text-muted-foreground" />
                                   משתמש רגיל
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="viewer">
+                                <div className="flex items-center gap-2">
+                                  <Eye className="w-4 h-4 text-sky-500" />
+                                  צופה (נעול)
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="admin">
+                                <div className="flex items-center gap-2">
+                                  <Crown className="w-4 h-4 text-amber-500" />
+                                  מנהל מערכת
                                 </div>
                               </SelectItem>
                             </SelectContent>

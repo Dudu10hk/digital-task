@@ -60,7 +60,7 @@ interface TaskDetailSheetProps {
 }
 
 export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetProps) {
-  const { updateTask, addComment, deleteTask, users, currentUser, canEditTask, updateInProgressStation, updateHandler } = useTaskContext()
+  const { updateTask, addComment, deleteTask, users, currentUser, canEditTask, isViewer, updateInProgressStation, updateHandler } = useTaskContext()
   const [newComment, setNewComment] = useState("")
   const [taggedUserIds, setTaggedUserIds] = useState<string[]>([])
   const [showFigmaPreview, setShowFigmaPreview] = useState(false)
@@ -139,7 +139,7 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
   }
 
   const handleAddComment = () => {
-    if (!newComment.trim()) return
+    if (!newComment.trim() || isViewer()) return
     addComment(task.id, newComment, taggedUserIds)
     setNewComment("")
     setTaggedUserIds([])
@@ -480,24 +480,26 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
               </TabsList>
 
               <TabsContent value="comments" className="mt-5 space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <MentionInput
-                      value={newComment}
-                      onChange={handleCommentChange}
-                      placeholder="הקלד @ כדי לתייג משתמש"
-                      rows={2}
-                    />
+                {!isViewer() && (
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <MentionInput
+                        value={newComment}
+                        onChange={handleCommentChange}
+                        placeholder="הקלד @ כדי לתייג משתמש"
+                        rows={2}
+                      />
+                    </div>
+                    <Button
+                      size="icon"
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim()}
+                      className="self-start shadow-lg shadow-primary/25 h-11 w-11 rounded-lg"
+                    >
+                      <Send className="w-5 h-5" />
+                    </Button>
                   </div>
-                  <Button
-                    size="icon"
-                    onClick={handleAddComment}
-                    disabled={!newComment.trim()}
-                    className="self-start shadow-lg shadow-primary/25 h-11 w-11 rounded-lg"
-                  >
-                    <Send className="w-5 h-5" />
-                  </Button>
-                </div>
+                )}
 
                 {/* Comments List */}
                 <div className="space-y-3 pt-2">

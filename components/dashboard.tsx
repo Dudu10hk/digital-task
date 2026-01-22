@@ -27,7 +27,7 @@ import { StatisticsDashboard } from "@/components/statistics-dashboard"
 type ViewType = "list" | "board" | "calendar" | "archive" | "statistics"
 
 export function Dashboard() {
-  const { currentUser, logout, tasks, isAdmin, loading } = useTaskContext()
+  const { currentUser, logout, tasks, isAdmin, isViewer, loading } = useTaskContext()
   const [currentView, setCurrentView] = useState<ViewType>("board")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
@@ -86,10 +86,12 @@ export function Dashboard() {
             <NotificationsPanel />
 
             {/* Add Task Button */}
-            <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/25 h-10 px-5 font-medium rounded-lg">
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">משימה חדשה</span>
-            </Button>
+            {!isViewer() && (
+              <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/25 h-10 px-5 font-medium rounded-lg">
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">משימה חדשה</span>
+              </Button>
+            )}
 
             {/* User Menu */}
             <DropdownMenu>

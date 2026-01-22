@@ -12,7 +12,7 @@ import { boardColumns } from "@/lib/status-config"
 import { Plus, Lock } from "lucide-react"
 
 export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
-  const { updateTaskColumn, reorderTaskInColumn, isAdmin } = useTaskContext()
+  const { updateTaskColumn, reorderTaskInColumn, isAdmin, isViewer, tasks } = useTaskContext()
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<BoardColumn | null>(null)
@@ -33,6 +33,10 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
   }
 
   const handleDragStart = (e: React.DragEvent, taskId: string, fromColumn: BoardColumn) => {
+    if (isViewer()) {
+      e.preventDefault()
+      return
+    }
     setDraggedTaskId(taskId)
     setDraggedFromColumn(fromColumn)
     e.dataTransfer.effectAllowed = "move"
@@ -40,6 +44,7 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
 
   const handleDragOver = (e: React.DragEvent, columnId: BoardColumn) => {
     e.preventDefault()
+    if (isViewer()) return
     setDragOverColumn(columnId)
   }
 
@@ -157,8 +162,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                           {index + 1}
                         </div>
                       )}
-                      {showPriorityNumber && !canReorder && (
-                        <div className="absolute -left-2 -top-2 z-10" title="רק מנהלים יכולים לשנות סדר">
+                      {showPriorityNumber && (isViewer() || !canReorder) && (
+                        <div className="absolute -left-2 -top-2 z-10" title={isViewer() ? "צופה לא יכול לשנות סדר" : "רק מנהלים יכולים לשנות סדר"}>
                           <Lock className="w-4 h-4 text-muted-foreground" />
                         </div>
                       )}
@@ -166,7 +171,7 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                         task={task}
                         compact
                         onEdit={() => setEditingTask(task)}
-                        draggable={canReorder || column.id !== "in-progress"}
+                        draggable={!isViewer() && (canReorder || column.id !== "in-progress")}
                         onDragStart={(e) => handleDragStart(e, task.id, column.id)}
                       />
                     </div>
@@ -186,7 +191,7 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
               })}
 
               {/* Quick Add Button - only in todo column */}
-              {column.id === "todo" && (
+              {column.id === "todo" && !isViewer() && (
                 <Button
                   variant="ghost"
                   className="w-full h-12 border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 gap-2 text-muted-foreground hover:text-foreground transition-all"

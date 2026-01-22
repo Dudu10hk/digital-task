@@ -30,8 +30,11 @@ export function LoginForm() {
     const user = users.find((u) => u.email === userEmail)
     if (user) {
       setEmail(userEmail)
-      setPassword(user.password)
-      const success = await login(userEmail, user.password)
+      // In a real app, we wouldn't have the password here. 
+      // For this demo, we use the known demo password.
+      const demoPassword = "123456"
+      setPassword(demoPassword)
+      const success = await login(userEmail, demoPassword)
       if (!success) {
         setError("שגיאה בהתחברות")
       }
@@ -176,8 +179,9 @@ export function LoginForm() {
                   </Avatar>
                   <div className="text-right flex-1">
                     <p className="font-semibold">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.role}</p>
-                    <p className="text-xs text-muted-foreground/70 mt-1">סיסמה: {user.password}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {user.role === "admin" ? "מנהל מערכת" : user.role === "viewer" ? "צופה (נעול)" : "משתמש רגיל"}
+                    </p>
                   </div>
                   <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:-translate-x-1 transition-all" />
                 </button>

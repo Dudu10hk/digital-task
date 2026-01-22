@@ -13,7 +13,7 @@ export type InProgressStation =
   | "business-review" // בבחינה מול החטיבה העסקית
   | "ux-requirements" // בהגדרת דרישה ב-UX
 
-export type UserRole = "admin" | "user"
+export type UserRole = "admin" | "user" | "viewer"
 
 export interface User {
   id: string

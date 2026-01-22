@@ -39,7 +39,8 @@ interface TaskContextType {
   markAllNotificationsAsRead: () => void
   canEditTask: (task: Task) => boolean
   isAdmin: () => boolean
-  updateUserRole: (userId: string, role: "admin" | "user") => void
+  isViewer: () => boolean
+  updateUserRole: (userId: string, role: UserRole) => void
   reorderTaskInColumn: (taskId: string, newOrder: number, column: BoardColumn) => void
   addUser: (user: Omit<User, "id">) => Promise<void>
   deleteUser: (userId: string) => Promise<boolean>
@@ -156,8 +157,13 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return currentUser?.role === "admin"
   }, [currentUser?.role])
 
+  const isViewer = useCallback((): boolean => {
+    return currentUser?.role === "viewer"
+  }, [currentUser?.role])
+
   const canEditTask = useCallback((task: Task): boolean => {
     if (!currentUser) return false
+    if (currentUser.role === "viewer") return false
     if (currentUser.role === "admin") return true
     if (task.assigneeId === currentUser.id) return true
     if (task.handlerId === currentUser.id) return true
@@ -180,7 +186,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setCurrentUser(null)
   }
 
-  const updateUserRole = (userId: string, role: "admin" | "user") => {
+  const updateUserRole = (userId: string, role: UserRole) => {
     setUsers((prev) =>
       prev.map((user) => (user.id === userId ? { ...user, role } : user))
     )
@@ -703,6 +709,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         markAllNotificationsAsRead,
         canEditTask,
         isAdmin,
+        isViewer,
         updateUserRole,
         reorderTaskInColumn,
         addUser,

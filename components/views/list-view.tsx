@@ -20,7 +20,7 @@ type SortField = "title" | "status" | "priority" | "dueDate" | "assigneeName"
 type SortDirection = "asc" | "desc"
 
 export function ListView({ filteredTasks }: { filteredTasks: Task[] }) {
-  const { deleteTask, getUserById } = useTaskContext()
+  const { deleteTask, getUserById, canEditTask, isViewer } = useTaskContext()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all")
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "all">("all")
@@ -263,35 +263,41 @@ export function ListView({ filteredTasks }: { filteredTasks: Task[] }) {
                       )}
                     </td>
                     <td className="px-5 py-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEditingTask(task)
-                            }}
-                            className="gap-2"
-                          >
-                            <Edit className="w-4 h-4" />
-                            עריכה
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              deleteTask(task.id)
-                            }}
-                            className="gap-2 text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            מחיקה
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {!isViewer() && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            {canEditTask(task) && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEditingTask(task)
+                                }}
+                                className="gap-2"
+                              >
+                                <Edit className="w-4 h-4" />
+                                עריכה
+                              </DropdownMenuItem>
+                            )}
+                            {canEditTask(task) && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  deleteTask(task.id)
+                                }}
+                                className="gap-2 text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                מחיקה
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </td>
                   </tr>
                 )
