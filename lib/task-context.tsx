@@ -1,8 +1,45 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation, StickyNote, ArchivedTask } from "./types"
 import { mockTasks, mockUsers } from "./mock-data"
+
+// Helper functions for localStorage
+const STORAGE_KEYS = {
+  USERS: 'task-management-users',
+  TASKS: 'task-management-tasks',
+  NOTIFICATIONS: 'task-management-notifications',
+  ARCHIVED_TASKS: 'task-management-archived-tasks',
+  STICKY_NOTES: 'task-management-sticky-notes',
+}
+
+function loadFromStorage<T>(key: string, defaultValue: T): T {
+  if (typeof window === 'undefined') return defaultValue
+  try {
+    const item = localStorage.getItem(key)
+    if (!item) return defaultValue
+    const parsed = JSON.parse(item)
+    // Convert date strings back to Date objects
+    return JSON.parse(item, (key, value) => {
+      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+        return new Date(value)
+      }
+      return value
+    })
+  } catch (error) {
+    console.error(`Error loading ${key} from localStorage:`, error)
+    return defaultValue
+  }
+}
+
+function saveToStorage<T>(key: string, value: T): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch (error) {
+    console.error(`Error saving ${key} to localStorage:`, error)
+  }
+}
 
 interface TaskContextType {
   tasks: Task[]
@@ -42,12 +79,33 @@ interface TaskContextType {
 const TaskContext = createContext<TaskContextType | undefined>(undefined)
 
 export function TaskProvider({ children }: { children: ReactNode }) {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks)
-  const [users, setUsers] = useState<User[]>(mockUsers)
+  const [tasks, setTasks] = useState<Task[]>(() => loadFromStorage(STORAGE_KEYS.TASKS, mockTasks))
+  const [users, setUsers] = useState<User[]>(() => loadFromStorage(STORAGE_KEYS.USERS, mockUsers))
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>([])
-  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>(() => loadFromStorage(STORAGE_KEYS.NOTIFICATIONS, []))
+  const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>(() => loadFromStorage(STORAGE_KEYS.ARCHIVED_TASKS, []))
+  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>(() => loadFromStorage(STORAGE_KEYS.STICKY_NOTES, []))
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.TASKS, tasks)
+  }, [tasks])
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.USERS, users)
+  }, [users])
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.NOTIFICATIONS, notifications)
+  }, [notifications])
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.ARCHIVED_TASKS, archivedTasks)
+  }, [archivedTasks])
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.STICKY_NOTES, stickyNotes)
+  }, [stickyNotes])
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read && n.toUserId === currentUser?.id).length
 
