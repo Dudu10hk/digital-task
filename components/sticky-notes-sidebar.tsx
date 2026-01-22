@@ -82,7 +82,7 @@ export function StickyNotesSidebar() {
         variant="ghost"
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed left-2 sm:left-4 top-16 sm:top-20 z-40 w-9 h-9 sm:w-10 sm:h-10 rounded-full shadow-lg bg-card border transition-all ${
+        className={`fixed left-2 sm:left-4 top-16 sm:top-20 z-[60] w-9 h-9 sm:w-10 sm:h-10 rounded-full shadow-lg bg-card border transition-all ${
           isOpen ? "translate-x-[260px] sm:translate-x-[280px]" : ""
         }`}
       >
@@ -91,7 +91,7 @@ export function StickyNotesSidebar() {
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-full w-[260px] sm:w-[280px] bg-card border-r shadow-xl z-30 transition-transform duration-300 ${
+        className={`fixed left-0 top-0 h-full w-[260px] sm:w-[280px] bg-card border-r shadow-xl z-50 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >

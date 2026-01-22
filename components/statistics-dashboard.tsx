@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { statusConfig, inProgressStationConfig } from "@/lib/status-config"
 import {
   BarChart3,
   TrendingUp,
@@ -13,6 +14,12 @@ import {
   Users,
   Target,
   Activity,
+  Palette,
+  Code,
+  TestTube,
+  Search,
+  Layers,
+  FileText,
 } from "lucide-react"
 import type { Task, InProgressStation } from "@/lib/types"
 
@@ -91,6 +98,19 @@ export function StatisticsDashboard() {
     "ux-requirements": "בהגדרת UX",
   }
 
+  const getStationIcon = (iconName: string) => {
+    const icons: Record<string, React.ComponentType<{ className?: string }>> = {
+      Palette,
+      Code,
+      TestTube,
+      Search,
+      Users,
+      Layers,
+    }
+    const Icon = icons[iconName] || FileText
+    return <Icon className="w-4 h-4" />
+  }
+
   return (
     <div className="space-y-6">
       {/* Main Stats */}
@@ -159,35 +179,35 @@ export function StatisticsDashboard() {
             <Target className="w-5 h-5 text-primary" />
             <h3 className="font-semibold">פילוח לפי דחיפות</h3>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge variant="destructive" className="w-16 justify-center">דחוף</Badge>
+                <Badge variant="outline" className="w-20 justify-center bg-rose-50 text-rose-700 border-rose-200">דחוף</Badge>
                 <span className="text-sm text-muted-foreground">משימות</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 rounded-full bg-red-500" style={{ width: `${Math.max(stats.highPriority * 20, 20)}px` }} />
-                <span className="font-semibold">{stats.highPriority}</span>
+              <div className="flex items-center gap-3 flex-1 justify-end">
+                <div className="h-2 rounded-full bg-rose-500 transition-all duration-500" style={{ width: `${Math.min(stats.highPriority * 10, 100)}%`, maxWidth: '120px' }} />
+                <span className="font-bold text-rose-700 min-w-[20px] text-right">{stats.highPriority}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge className="w-16 justify-center bg-amber-500">בינונית</Badge>
+                <Badge variant="outline" className="w-20 justify-center bg-amber-50 text-amber-700 border-amber-200">בינונית</Badge>
                 <span className="text-sm text-muted-foreground">משימות</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 rounded-full bg-amber-500" style={{ width: `${Math.max(stats.mediumPriority * 20, 20)}px` }} />
-                <span className="font-semibold">{stats.mediumPriority}</span>
+              <div className="flex items-center gap-3 flex-1 justify-end">
+                <div className="h-2 rounded-full bg-amber-500 transition-all duration-500" style={{ width: `${Math.min(stats.mediumPriority * 10, 100)}%`, maxWidth: '120px' }} />
+                <span className="font-bold text-amber-700 min-w-[20px] text-right">{stats.mediumPriority}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="w-16 justify-center">נמוכה</Badge>
+                <Badge variant="outline" className="w-20 justify-center bg-sky-50 text-sky-700 border-sky-200">נמוכה</Badge>
                 <span className="text-sm text-muted-foreground">משימות</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 rounded-full bg-gray-400" style={{ width: `${Math.max(stats.lowPriority * 20, 20)}px` }} />
-                <span className="font-semibold">{stats.lowPriority}</span>
+              <div className="flex items-center gap-3 flex-1 justify-end">
+                <div className="h-2 rounded-full bg-sky-500 transition-all duration-500" style={{ width: `${Math.min(stats.lowPriority * 10, 100)}%`, maxWidth: '120px' }} />
+                <span className="font-bold text-sky-700 min-w-[20px] text-right">{stats.lowPriority}</span>
               </div>
             </div>
           </div>
@@ -199,35 +219,35 @@ export function StatisticsDashboard() {
             <BarChart3 className="w-5 h-5 text-primary" />
             <h3 className="font-semibold">פילוח לפי עמודות</h3>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="text-sm">To Do</span>
+                <div className="w-3 h-3 rounded-full bg-slate-400 shadow-sm" />
+                <span className="text-sm font-medium">To Do</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 rounded-full bg-blue-500" style={{ width: `${Math.max(stats.todoTasks * 20, 20)}px` }} />
-                <span className="font-semibold">{stats.todoTasks}</span>
+              <div className="flex items-center gap-3 flex-1 justify-end">
+                <div className="h-2 rounded-full bg-slate-200 transition-all duration-500" style={{ width: `${Math.min(stats.todoTasks * 10, 100)}%`, maxWidth: '120px' }} />
+                <span className="font-bold text-slate-700 min-w-[20px] text-right">{stats.todoTasks}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-amber-500" />
-                <span className="text-sm">In Progress</span>
+                <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm" />
+                <span className="text-sm font-medium">In Progress</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 rounded-full bg-amber-500" style={{ width: `${Math.max(stats.inProgressTasks * 20, 20)}px` }} />
-                <span className="font-semibold">{stats.inProgressTasks}</span>
+              <div className="flex items-center gap-3 flex-1 justify-end">
+                <div className="h-2 rounded-full bg-blue-100 transition-all duration-500" style={{ width: `${Math.min(stats.inProgressTasks * 10, 100)}%`, maxWidth: '120px' }} />
+                <span className="font-bold text-blue-700 min-w-[20px] text-right">{stats.inProgressTasks}</span>
               </div>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="text-sm">Done</span>
+                <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm" />
+                <span className="text-sm font-medium">Done</span>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="h-2 rounded-full bg-green-500" style={{ width: `${Math.max(stats.doneTasks * 20, 20)}px` }} />
-                <span className="font-semibold">{stats.doneTasks}</span>
+              <div className="flex items-center gap-3 flex-1 justify-end">
+                <div className="h-2 rounded-full bg-emerald-100 transition-all duration-500" style={{ width: `${Math.min(stats.doneTasks * 10, 100)}%`, maxWidth: '120px' }} />
+                <span className="font-bold text-emerald-700 min-w-[20px] text-right">{stats.doneTasks}</span>
               </div>
             </div>
           </div>
@@ -237,41 +257,58 @@ export function StatisticsDashboard() {
       {/* Stations Breakdown */}
       {stats.inProgressTasks > 0 && (
         <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold">פילוח תחנות (In Progress)</h3>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <Clock className="w-5 h-5 text-primary" />
+            </div>
+            <h3 className="font-semibold text-lg">פילוח תחנות (In Progress)</h3>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {(Object.entries(stats.stationCounts) as [InProgressStation, number][]).map(([station, count]) => (
-              <div key={station} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <span className="text-sm">{stationLabels[station]}</span>
-                <Badge variant="secondary" className="font-semibold">
-                  {count}
-                </Badge>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(Object.entries(stats.stationCounts) as [InProgressStation, number][]).map(([station, count]) => {
+              const config = inProgressStationConfig[station]
+              return (
+                <div key={station} className={`flex items-center justify-between p-4 rounded-xl border transition-all hover:shadow-md ${count > 0 ? config.bgClass : 'bg-slate-50/50 border-slate-100 opacity-60'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg bg-white shadow-sm ${count > 0 ? 'text-primary' : 'text-slate-400'}`}>
+                      {getStationIcon(config.icon)}
+                    </div>
+                    <span className="text-sm font-medium">{stationLabels[station]}</span>
+                  </div>
+                  <Badge variant={count > 0 ? "default" : "outline"} className={`font-bold min-w-[24px] h-6 flex items-center justify-center rounded-full ${count > 0 ? '' : 'text-slate-400 border-slate-200'}`}>
+                    {count}
+                  </Badge>
+                </div>
+              )
+            })}
           </div>
         </Card>
       )}
 
       {/* User Workload */}
       <Card className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold">עומס משתמשים</h3>
+        <div className="flex items-center gap-2 mb-6">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Users className="w-5 h-5 text-primary" />
+          </div>
+          <h3 className="font-semibold text-lg">עומס משתמשים</h3>
         </div>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {stats.userWorkload.map((user) => (
-            <div key={user.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-              <span className="font-medium">{user.name}</span>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">אחראי:</span>
-                  <Badge variant="secondary" className="font-semibold">{user.assigned}</Badge>
+            <div key={user.name} className="flex items-center justify-between p-4 bg-slate-50/50 border border-slate-100 rounded-xl hover:bg-white hover:shadow-sm transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                  {user.name.split(' ').map(n => n[0]).join('')}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">מטפל:</span>
-                  <Badge variant="outline" className="font-semibold">{user.handling}</Badge>
+                <span className="font-semibold text-slate-700">{user.name}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">אחראי</span>
+                  <Badge variant="secondary" className="bg-white border-slate-200 text-slate-700 font-bold shadow-sm">{user.assigned}</Badge>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">מטפל</span>
+                  <Badge variant="outline" className="bg-amber-50 border-amber-200 text-amber-700 font-bold shadow-sm">{user.handling}</Badge>
                 </div>
               </div>
             </div>

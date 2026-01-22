@@ -36,9 +36,9 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
   }
 
   const priorityStyles = {
-    high: "bg-red-500 text-white border-0",
-    medium: "bg-amber-500 text-white border-0",
-    low: "bg-blue-500 text-white border-0",
+    high: "bg-rose-50 text-rose-700 border-rose-200 shadow-sm",
+    medium: "bg-amber-50 text-amber-700 border-amber-200 shadow-sm",
+    low: "bg-sky-50 text-sky-700 border-sky-200 shadow-sm",
   }
 
   const getStationIcon = (iconName: string) => {
@@ -65,7 +65,7 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
   return (
     <>
       <Card
-        className={`group cursor-pointer bg-card hover:shadow-lg hover:shadow-foreground/5 transition-all duration-200 border-border/50 ${draggable ? "cursor-grab active:cursor-grabbing active:shadow-xl" : ""}`}
+        className={`group cursor-pointer bg-card hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/60 ${draggable ? "cursor-grab active:cursor-grabbing active:shadow-2xl" : ""}`}
         onClick={handleCardClick}
         draggable={draggable}
         onDragStart={onDragStart}
@@ -126,7 +126,7 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
             </Badge>
             {/* In Progress Station Badge */}
             {task.column === "in-progress" && task.inProgressStation && (
-              <Badge className={`${inProgressStationConfig[task.inProgressStation].color} text-white border-0 text-xs font-medium flex items-center gap-1.5`}>
+              <Badge className={`${inProgressStationConfig[task.inProgressStation].bgClass} border text-xs font-medium flex items-center gap-1.5`}>
                 {getStationIcon(inProgressStationConfig[task.inProgressStation].icon)}
                 {inProgressStationConfig[task.inProgressStation].label}
               </Badge>
@@ -134,68 +134,67 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
           </div>
 
           {/* Footer - Meta info & Avatar */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+          <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-50">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
               {task.dueDate && (
-                <div className="flex items-center gap-1.5 bg-gray-100 text-foreground px-2 py-1 rounded-md">
+                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md font-medium ${new Date(task.dueDate) < new Date() ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-slate-50 text-slate-600 border border-slate-100'}`}>
                   <Calendar className="w-3.5 h-3.5" />
                   <span>{format(task.dueDate, "d MMM", { locale: he })}</span>
                 </div>
               )}
 
               {task.figmaLink && (
-                <div className="bg-gray-100 p-1.5 rounded-md" title="Figma Design">
-                  <Figma className="w-3.5 h-3.5 text-foreground" />
+                <div className="bg-slate-50 p-1.5 rounded-md border border-slate-100 hover:bg-purple-50 hover:text-purple-600 transition-colors" title="Figma Design">
+                  <Figma className="w-3.5 h-3.5" />
                 </div>
               )}
 
               {task.processSpecLink && (
-                <div className="bg-gray-100 p-1.5 rounded-md" title="אפיון תהליך">
-                  <FileText className="w-3.5 h-3.5 text-foreground" />
-                </div>
-              )}
-
-              {task.files.length > 0 && (
-                <div className="flex items-center gap-1 bg-gray-100 text-foreground px-2 py-1 rounded-md">
+                <div className="bg-slate-50 p-1.5 rounded-md border border-slate-100 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="אפיון תהליך">
                   <FileText className="w-3.5 h-3.5" />
-                  <span>{task.files.length}</span>
                 </div>
               )}
 
-              {task.comments.length > 0 && (
-                <div className="flex items-center gap-1 bg-gray-100 text-foreground px-2 py-1 rounded-md">
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>{task.comments.length}</span>
+              {(task.files.length > 0 || task.comments.length > 0) && (
+                <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
+                  {task.files.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      <span className="font-bold">{task.files.length}</span>
+                    </div>
+                  )}
+                  {task.comments.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="w-3 h-3" />
+                      <span className="font-bold">{task.comments.length}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center -space-x-2 rtl:space-x-reverse">
               {/* Handler Avatar */}
               {handler && (
-                <div className="flex items-center gap-1" title={`גורם מטפל: ${handler.name}`}>
-                  <Wrench className="w-3 h-3 text-muted-foreground" />
-                  <Avatar className="w-7 h-7 ring-2 ring-amber-400 shadow-sm">
+                <div className="relative z-10" title={`גורם מטפל: ${handler.name}`}>
+                  <Avatar className="w-7 h-7 ring-2 ring-white shadow-sm">
                     <AvatarImage src={handler.avatar || "/placeholder.svg"} alt={handler.name} />
-                    <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700 font-semibold">
-                      {handler.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                    <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700 font-bold">
+                      {handler.name.split(" ").map((n) => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
+                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm ring-1 ring-slate-100">
+                    <Wrench className="w-2 h-2 text-amber-600" />
+                  </div>
                 </div>
               )}
 
               {/* Assignee Avatar */}
               {assignee && (
-                <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm" title={`אחראי: ${assignee.name}`}>
+                <Avatar className="w-8 h-8 ring-2 ring-white shadow-md z-0" title={`אחראי: ${assignee.name}`}>
                   <AvatarImage src={assignee.avatar || "/placeholder.svg"} alt={assignee.name} />
-                  <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-medium">
-                    {assignee.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                  <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-bold">
+                    {assignee.name.split(" ").map((n) => n[0]).join("")}
                   </AvatarFallback>
                 </Avatar>
               )}
