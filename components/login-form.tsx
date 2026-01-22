@@ -6,15 +6,14 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useTaskContext } from "@/lib/task-context"
-import { AlertCircle, LayoutGrid, ArrowLeft, Sparkles, CheckCircle2, Users, Clock } from "lucide-react"
+import { AlertCircle, LayoutGrid, ArrowLeft, CheckCircle2, Users, Clock } from "lucide-react"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const { login, users } = useTaskContext()
+  const { login } = useTaskContext()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,21 +22,6 @@ export function LoginForm() {
     const success = await login(email, password)
     if (!success) {
       setError("אימייל או סיסמה שגויים")
-    }
-  }
-
-  const handleQuickLogin = async (userEmail: string) => {
-    const user = users.find((u) => u.email === userEmail)
-    if (user) {
-      setEmail(userEmail)
-      // In a real app, we wouldn't have the password here. 
-      // For this demo, we use the known demo password.
-      const demoPassword = "123456"
-      setPassword(demoPassword)
-      const success = await login(userEmail, demoPassword)
-      if (!success) {
-        setError("שגיאה בהתחברות")
-      }
     }
   }
 
@@ -154,40 +138,6 @@ export function LoginForm() {
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </form>
-
-          {/* Demo Users */}
-          <div className="pt-6 border-t border-border/50">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-muted-foreground">התחברות מהירה לדמו</span>
-            </div>
-            <div className="grid gap-2">
-              {users.map((user) => (
-                <button
-                  key={user.id}
-                  onClick={() => handleQuickLogin(user.email)}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl bg-muted/30 hover:bg-muted/60 transition-all duration-200 group border border-transparent hover:border-primary/20"
-                >
-                  <Avatar className="w-11 h-11 ring-2 ring-border group-hover:ring-primary/30 transition-all">
-                    <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                      {user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="text-right flex-1">
-                    <p className="font-semibold">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {user.role === "admin" ? "מנהל מערכת" : user.role === "viewer" ? "צופה (נעול)" : "משתמש רגיל"}
-                    </p>
-                  </div>
-                  <ArrowLeft className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:-translate-x-1 transition-all" />
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
