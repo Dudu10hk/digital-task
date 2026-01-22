@@ -173,30 +173,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     }
   }
-    if (!currentUser) return
-
-    try {
-      setLoading(true)
-      
-      // Load all data in parallel
-      const [tasksData, notificationsData, notesData, archivedData] = await Promise.all([
-        loadTasks(),
-        loadNotifications(currentUser.id),
-        loadStickyNotes(currentUser.id),
-        loadArchivedTasks()
-      ])
-
-      setTasks(tasksData)
-      setNotifications(notificationsData)
-      setStickyNotes(notesData)
-      setArchivedTasks(archivedData)
-
-    } catch (error) {
-      console.error('Error loading data from Supabase:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // Remove localStorage saving - everything is in Supabase now
 
