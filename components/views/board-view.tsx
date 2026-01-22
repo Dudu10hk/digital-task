@@ -11,8 +11,8 @@ import type { Task, BoardColumn } from "@/lib/types"
 import { boardColumns } from "@/lib/status-config"
 import { Plus, Lock } from "lucide-react"
 
-export function BoardView() {
-  const { tasks, updateTaskColumn, reorderTaskInColumn, isAdmin } = useTaskContext()
+export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
+  const { updateTaskColumn, reorderTaskInColumn, isAdmin } = useTaskContext()
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<BoardColumn | null>(null)
@@ -20,7 +20,7 @@ export function BoardView() {
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null)
 
   const getTasksByColumn = (column: BoardColumn) => {
-    return tasks
+    return filteredTasks
       .filter((task) => task.column === column)
       .sort((a, b) => a.order - b.order)
   }

@@ -22,8 +22,7 @@ import {
 } from "date-fns"
 import { he } from "date-fns/locale"
 
-export function CalendarView() {
-  const { tasks } = useTaskContext()
+export function CalendarView({ filteredTasks }: { filteredTasks: Task[] }) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
@@ -34,7 +33,7 @@ export function CalendarView() {
   }, [currentMonth])
 
   const getTasksForDay = (date: Date) => {
-    return tasks.filter((task) => task.dueDate && isSameDay(task.dueDate, date))
+    return filteredTasks.filter((task) => task.dueDate && isSameDay(task.dueDate, date))
   }
 
   const weekDays = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]

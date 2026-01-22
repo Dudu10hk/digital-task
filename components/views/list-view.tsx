@@ -19,8 +19,8 @@ import { he } from "date-fns/locale"
 type SortField = "title" | "status" | "priority" | "dueDate" | "assigneeName"
 type SortDirection = "asc" | "desc"
 
-export function ListView() {
-  const { tasks, deleteTask, getUserById } = useTaskContext()
+export function ListView({ filteredTasks }: { filteredTasks: Task[] }) {
+  const { deleteTask, getUserById } = useTaskContext()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all")
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "all">("all")
@@ -42,7 +42,7 @@ export function ListView() {
   }
 
   const filteredAndSortedTasks = useMemo(() => {
-    let result = [...tasks]
+    let result = [...filteredTasks]
 
     if (search) {
       result = result.filter(
@@ -89,7 +89,7 @@ export function ListView() {
     })
 
     return result
-  }, [tasks, search, statusFilter, priorityFilter, sortField, sortDirection])
+  }, [filteredTasks, search, statusFilter, priorityFilter, sortField, sortDirection])
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {

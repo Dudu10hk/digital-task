@@ -19,20 +19,33 @@ import { TaskDialog } from "@/components/task-dialog"
 import { NotificationsPanel } from "@/components/notifications-panel"
 import { UserManagement } from "@/components/user-management"
 import { StickyNotesSidebar } from "@/components/sticky-notes-sidebar"
-import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Search, Crown, Archive } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Crown, Archive, BarChart3 } from "lucide-react"
+import { AdvancedFilters, applyFilters, type FilterOptions } from "@/components/advanced-filters"
+import { StatisticsDashboard } from "@/components/statistics-dashboard"
 
-type ViewType = "list" | "board" | "calendar" | "archive"
+type ViewType = "list" | "board" | "calendar" | "archive" | "statistics"
 
 export function Dashboard() {
   const { currentUser, logout, tasks, isAdmin } = useTaskContext()
   const [currentView, setCurrentView] = useState<ViewType>("board")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [filters, setFilters] = useState<FilterOptions>({
+    searchQuery: "",
+    priority: "all",
+    status: "all",
+    column: "all",
+    assigneeId: "all",
+    handlerId: "all",
+    hasOverdueDate: null,
+  })
+
+  const filteredTasks = applyFilters(tasks, filters)
 
   const views = [
     { id: "board" as ViewType, label: "בורד", icon: Columns3 },
     { id: "list" as ViewType, label: "רשימה", icon: List },
     { id: "calendar" as ViewType, label: "לוח שנה", icon: Calendar },
+    { id: "statistics" as ViewType, label: "סטטיסטיקות", icon: BarChart3 },
     { id: "archive" as ViewType, label: "ארכיון", icon: Archive },
   ]
 
@@ -57,15 +70,9 @@ export function Dashboard() {
             </div>
           </div>
 
-          {/* Center - Search */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="חיפוש משימות..."
-                className="pr-10 bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg h-10"
-              />
-            </div>
+          {/* Center - Search & Filters */}
+          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+            <AdvancedFilters onFilterChange={setFilters} />
           </div>
 
           {/* Right Actions */}
@@ -133,9 +140,10 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main className="p-6">
-        {currentView === "list" && <ListView />}
-        {currentView === "board" && <BoardView />}
-        {currentView === "calendar" && <CalendarView />}
+        {currentView === "list" && <ListView filteredTasks={filteredTasks} />}
+        {currentView === "board" && <BoardView filteredTasks={filteredTasks} />}
+        {currentView === "calendar" && <CalendarView filteredTasks={filteredTasks} />}
+        {currentView === "statistics" && <StatisticsDashboard />}
         {currentView === "archive" && <ArchiveView />}
       </main>
 
