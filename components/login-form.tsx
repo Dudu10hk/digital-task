@@ -61,6 +61,8 @@ export function LoginForm() {
       return
     }
 
+    console.log('🔐 Verifying OTP:', { email, otp, length: otp.length })
+
     try {
       const success = await loginWithOTP(email, otp)
       
@@ -254,9 +256,8 @@ export function LoginForm() {
                     value={otp}
                     onChange={setOtp}
                     disabled={loading}
-                    dir="ltr"
                   >
-                    <InputOTPGroup className="gap-2 mx-auto">
+                    <InputOTPGroup className="gap-2 mx-auto" dir="ltr">
                       <InputOTPSlot index={0} className="w-12 h-14 text-xl" />
                       <InputOTPSlot index={1} className="w-12 h-14 text-xl" />
                       <InputOTPSlot index={2} className="w-12 h-14 text-xl" />
@@ -265,6 +266,12 @@ export function LoginForm() {
                       <InputOTPSlot index={5} className="w-12 h-14 text-xl" />
                     </InputOTPGroup>
                   </InputOTP>
+
+                  {otp.length > 0 && (
+                    <div className="text-xs text-muted-foreground font-mono" dir="ltr">
+                      הקוד שהזנת: {otp}
+                    </div>
+                  )}
                 </div>
               </div>
 
