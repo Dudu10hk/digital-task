@@ -41,7 +41,16 @@ export function LoginForm() {
         return
       }
 
-      toast.success('קוד האימות נשלח למייל שלך!')
+      // אם הקוד הוחזר (מצב Test), נציג אותו
+      if (data.code) {
+        toast.success(`קוד האימות שלך: ${data.code}`, {
+          duration: 30000, // 30 שניות
+          description: 'העתק את הקוד והזן אותו למטה'
+        })
+      } else {
+        toast.success('קוד האימות נשלח למייל שלך!')
+      }
+      
       setStep("otp")
     } catch (err) {
       setError('שגיאה בשליחת הקוד. נסה שוב.')
@@ -90,8 +99,18 @@ export function LoginForm() {
         body: JSON.stringify({ email })
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        toast.success('קוד חדש נשלח למייל שלך!')
+        // אם הקוד הוחזר (מצב Test), נציג אותו
+        if (data.code) {
+          toast.success(`קוד האימות שלך: ${data.code}`, {
+            duration: 30000, // 30 שניות
+            description: 'העתק את הקוד והזן אותו למטה'
+          })
+        } else {
+          toast.success('קוד חדש נשלח למייל שלך!')
+        }
       } else {
         toast.error('שגיאה בשליחת קוד חדש')
       }

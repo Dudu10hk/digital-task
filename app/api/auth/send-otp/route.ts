@@ -51,53 +51,38 @@ export async function POST(request: Request) {
       )
     }
 
-    // שליחת מייל
+    // שליחת מייל (רק ניסיון - אם נכשל, לא נפסיק את התהליך)
+    let emailSent = false
     try {
       const apiKey = process.env.RESEND_API_KEY
       
-      if (!apiKey) {
-        console.error('RESEND_API_KEY is not configured')
-        return NextResponse.json(
-          { error: 'Email service not configured' },
-          { status: 500 }
-        )
+      if (apiKey) {
+        const resend = new Resend(apiKey)
+        
+        // בדיקה אם Resend במצב sandbox או production
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+        
+        const result = await resend.emails.send({
+          from: `TaskFlow <${fromEmail}>`,
+          to: email,
+          subject: 'קוד האימות שלך - TaskFlow',
+          html: otpEmailTemplate(user.name, code)
+        })
+
+        console.log('Email sent successfully:', result)
+        emailSent = true
       }
-
-      const resend = new Resend(apiKey)
-      
-      // בדיקה אם Resend במצב sandbox או production
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-      
-      const result = await resend.emails.send({
-        from: `TaskFlow <${fromEmail}>`,
-        to: email,
-        subject: 'קוד האימות שלך - TaskFlow',
-        html: otpEmailTemplate(user.name, code)
-      })
-
-      console.log('Email sent successfully:', result)
     } catch (emailError: any) {
-      console.error('Error sending email:', {
-        message: emailError.message,
-        name: emailError.name,
-        cause: emailError.cause,
-        stack: emailError.stack
-      })
-      
-      // Return more specific error to help debug
-      return NextResponse.json(
-        { 
-          error: 'Failed to send email',
-          details: emailError.message || 'Unknown error',
-          code: code // For testing - include code in error (remove in production!)
-        },
-        { status: 500 }
-      )
+      console.error('Email sending failed (continuing anyway):', emailError.message)
     }
 
+    // תמיד מחזירים הצלחה + הקוד (במצב Test/Dev)
+    const isDev = process.env.NODE_ENV === 'development' || !process.env.RESEND_FROM_EMAIL
+    
     return NextResponse.json({
       success: true,
-      message: 'OTP sent successfully'
+      message: emailSent ? 'OTP sent successfully' : 'OTP generated (email not sent)',
+      ...(isDev && { code }) // מציג קוד רק במצב Test
     })
 
   } catch (error) {
