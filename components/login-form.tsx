@@ -7,19 +7,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useTaskContext } from "@/lib/task-context"
-import { AlertCircle, LayoutGrid, ArrowLeft, ArrowRight, CheckCircle2, Users, Clock, Mail, ShieldCheck } from "lucide-react"
+import { AlertCircle, LayoutGrid, ArrowLeft, ArrowRight, CheckCircle2, Users, Clock, Mail, ShieldCheck, Key, Smartphone } from "lucide-react"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { toast } from "sonner"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 type LoginStep = "email" | "otp"
+type LoginMethod = "otp" | "password"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [otp, setOtp] = useState("")
   const [error, setError] = useState("")
   const [step, setStep] = useState<LoginStep>("email")
+  const [loginMethod, setLoginMethod] = useState<LoginMethod>("otp")
   const [loading, setLoading] = useState(false)
-  const { loginWithOTP } = useTaskContext()
+  const { loginWithOTP, login } = useTaskContext()
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,6 +58,24 @@ export function LoginForm() {
       setStep("otp")
     } catch (err) {
       setError('שגיאה בשליחת הקוד. נסה שוב.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError("")
+    setLoading(true)
+
+    try {
+      const success = await login(email, password)
+      
+      if (!success) {
+        setError('אימייל או סיסמה שגויים')
+      }
+    } catch (err) {
+      setError('שגיאה בהתחברות. נסה שוב.')
     } finally {
       setLoading(false)
     }
@@ -197,53 +219,130 @@ export function LoginForm() {
             </h1>
             <p className="text-muted-foreground mt-2">
               {step === "email" 
-                ? "התחברו כדי להמשיך לניהול הפרויקטים" 
+                ? "בחרו את שיטת ההתחברות המועדפת עליכם" 
                 : "הזן את הקוד ששלחנו למייל שלך"}
             </p>
           </div>
 
-          {/* Step 1: Email */}
+          {/* Step 1: Login Methods */}
           {step === "email" && (
-            <form onSubmit={handleSendOTP} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  אימייל
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                  className="h-12 text-right bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 text-base"
-                  dir="ltr"
-                />
-              </div>
+            <Tabs value={loginMethod} onValueChange={(v) => setLoginMethod(v as LoginMethod)} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="otp" className="gap-2">
+                  <Smartphone className="w-4 h-4" />
+                  קוד חד-פעמי
+                </TabsTrigger>
+                <TabsTrigger value="password" className="gap-2">
+                  <Key className="w-4 h-4" />
+                  סיסמה
+                </TabsTrigger>
+              </TabsList>
 
-              {error && (
-                <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-xl">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
+              {/* OTP Tab */}
+              <TabsContent value="otp" className="space-y-5">
+                <form onSubmit={handleSendOTP} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="email-otp" className="text-sm font-semibold flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      אימייל
+                    </Label>
+                    <Input
+                      id="email-otp"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="h-12 text-right bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 text-base"
+                      dir="ltr"
+                    />
+                  </div>
 
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className="w-full h-12 font-semibold text-base shadow-lg shadow-primary/25 gap-2"
-              >
-                {loading ? "שולח קוד..." : "שלח קוד אימות"}
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
+                  {error && (
+                    <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-xl">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                  )}
 
-              <div className="flex items-center gap-2 p-4 bg-muted/30 rounded-xl text-sm text-muted-foreground">
-                <ShieldCheck className="w-4 h-4 shrink-0" />
-                <span>נשלח קוד בן 6 ספרות למייל שלך</span>
-              </div>
-            </form>
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full h-12 font-semibold text-base shadow-lg shadow-primary/25 gap-2"
+                  >
+                    {loading ? "שולח קוד..." : "שלח קוד אימות"}
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+
+                  <div className="flex items-center gap-2 p-4 bg-muted/30 rounded-xl text-sm text-muted-foreground">
+                    <ShieldCheck className="w-4 h-4 shrink-0" />
+                    <span>נשלח קוד בן 6 ספרות למייל שלך</span>
+                  </div>
+                </form>
+              </TabsContent>
+
+              {/* Password Tab */}
+              <TabsContent value="password" className="space-y-5">
+                <form onSubmit={handlePasswordLogin} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="email-password" className="text-sm font-semibold flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      אימייל
+                    </Label>
+                    <Input
+                      id="email-password"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="h-12 text-right bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 text-base"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-semibold flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      סיסמה
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={loading}
+                      className="h-12 text-right bg-muted/50 border-0 focus:bg-background focus:ring-2 focus:ring-primary/20 text-base"
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-xl">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full h-12 font-semibold text-base shadow-lg shadow-primary/25 gap-2"
+                  >
+                    {loading ? "מתחבר..." : "התחבר"}
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+
+                  <div className="flex items-center gap-2 p-4 bg-muted/30 rounded-xl text-sm text-muted-foreground">
+                    <Key className="w-4 h-4 shrink-0" />
+                    <span>השתמש בסיסמה הקבועה שהוגדרה לך</span>
+                  </div>
+                </form>
+              </TabsContent>
+            </Tabs>
           )}
 
           {/* Step 2: OTP */}

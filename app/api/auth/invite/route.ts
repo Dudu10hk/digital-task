@@ -6,7 +6,7 @@ import type { UserRole } from '@/lib/types'
 
 export async function POST(request: Request) {
   try {
-    const { name, email, role, adminId } = await request.json()
+    const { name, email, role, adminId, password } = await request.json()
 
     if (!name || !email || !role) {
       return NextResponse.json(
@@ -29,13 +29,13 @@ export async function POST(request: Request) {
       )
     }
 
-    // יצירת משתמש חדש (ללא סיסמה!)
+    // יצירת משתמש חדש (עם או בלי סיסמה)
     const newUser = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name,
       email,
       role: role as UserRole,
-      password: '', // ריק - לא נדרש יותר
+      password: password || '', // סיסמה אופציונלית
       avatar: undefined
     }
 

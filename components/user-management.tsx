@@ -40,6 +40,7 @@ export function UserManagement() {
   const { users, currentUser, updateUserRole, isAdmin, deleteUser, editUser, tasks } = useTaskContext()
   const [newName, setNewName] = useState("")
   const [newEmail, setNewEmail] = useState("")
+  const [newPassword, setNewPassword] = useState("")
   const [newAvatar, setNewAvatar] = useState("")
   const [newRole, setNewRole] = useState<UserRole>("user")
   const [isInviting, setIsInviting] = useState(false)
@@ -74,6 +75,7 @@ export function UserManagement() {
         body: JSON.stringify({
           name: newName.trim(),
           email: newEmail.trim(),
+          password: newPassword.trim() || undefined,
           role: newRole,
           adminId: currentUser?.id
         })
@@ -98,6 +100,7 @@ export function UserManagement() {
       // Reset form
       setNewName("")
       setNewEmail("")
+      setNewPassword("")
       setNewAvatar("")
       setNewRole("user")
     } catch (error) {
@@ -199,7 +202,7 @@ export function UserManagement() {
               הזמנת משתמש חדש למערכת
             </Label>
             <div className="text-sm text-muted-foreground mb-3 p-3 bg-background/50 rounded-lg">
-              <p>המשתמש יקבל מייל עם קוד אימות להתחברות ראשונה. בכל כניסה למערכת יישלח קוד חדש למייל שלו.</p>
+              <p>המשתמש יוכל להיכנס באמצעות OTP שנשלח למייל, או בסיסמה קבועה אם הוגדרה.</p>
             </div>
             <div className="grid gap-3">
               <div className="space-y-2">
@@ -225,6 +228,23 @@ export function UserManagement() {
                   className="bg-background h-11"
                   dir="ltr"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword" className="text-sm">
+                  סיסמה (אופציונלי - אם לא מוגדר, כניסה רק עם OTP)
+                </Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="הזן סיסמה (אופציונלי)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isInviting}
+                  className="bg-background h-11"
+                />
+                <p className="text-xs text-muted-foreground">
+                  אם תגדיר סיסמה, המשתמש יוכל להיכנס גם בסיסמה וגם ב-OTP
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newAvatar" className="text-sm">URL תמונה (אופציונלי)</Label>
