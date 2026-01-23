@@ -53,17 +53,40 @@ export async function POST(request: Request) {
 
     // שליחת מייל
     try {
-      const resend = new Resend(process.env.RESEND_API_KEY)
-      await resend.emails.send({
-        from: 'TaskFlow <onboarding@resend.dev>', // Resend's test email for development
+      const apiKey = process.env.RESEND_API_KEY
+      
+      if (!apiKey) {
+        console.error('RESEND_API_KEY is not configured')
+        return NextResponse.json(
+          { error: 'Email service not configured' },
+          { status: 500 }
+        )
+      }
+
+      const resend = new Resend(apiKey)
+      const result = await resend.emails.send({
+        from: 'TaskFlow <onboarding@resend.dev>',
         to: email,
         subject: 'קוד האימות שלך - TaskFlow',
         html: otpEmailTemplate(user.name, code)
       })
-    } catch (emailError) {
-      console.error('Error sending email:', emailError)
+
+      console.log('Email sent successfully:', result)
+    } catch (emailError: any) {
+      console.error('Error sending email:', {
+        message: emailError.message,
+        name: emailError.name,
+        cause: emailError.cause,
+        stack: emailError.stack
+      })
+      
+      // Return more specific error to help debug
       return NextResponse.json(
-        { error: 'Failed to send email' },
+        { 
+          error: 'Failed to send email',
+          details: emailError.message || 'Unknown error',
+          code: code // For testing - include code in error (remove in production!)
+        },
         { status: 500 }
       )
     }

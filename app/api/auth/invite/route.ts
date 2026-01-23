@@ -91,23 +91,45 @@ export async function POST(request: Request) {
 
     // שליחת מייל הזמנה
     try {
-      const resend = new Resend(process.env.RESEND_API_KEY)
+      const apiKey = process.env.RESEND_API_KEY
+      
+      if (!apiKey) {
+        console.error('RESEND_API_KEY is not configured')
+        return NextResponse.json(
+          { 
+            success: true, 
+            warning: 'User created but email service not configured',
+            user: newUser 
+          },
+          { status: 201 }
+        )
+      }
+
+      const resend = new Resend(apiKey)
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       
-      await resend.emails.send({
-        from: 'TaskFlow <onboarding@resend.dev>', // Resend's test email for development
+      const result = await resend.emails.send({
+        from: 'TaskFlow <onboarding@resend.dev>',
         to: email,
         subject: `${inviterName} הזמין אותך ל-TaskFlow! 🎉`,
         html: invitationEmailTemplate(name, code, inviterName, appUrl)
       })
-    } catch (emailError) {
-      console.error('Error sending invitation email:', emailError)
+
+      console.log('Invitation email sent successfully:', result)
+    } catch (emailError: any) {
+      console.error('Error sending invitation email:', {
+        message: emailError.message,
+        name: emailError.name,
+        cause: emailError.cause
+      })
+      
       // לא נמחק את המשתמש - המנהל יכול לשלוח הזמנה שוב
       return NextResponse.json(
         { 
           success: true, 
-          warning: 'User created but email failed to send',
-          user: newUser 
+          warning: `User created but email failed: ${emailError.message}`,
+          user: newUser,
+          code: code // For testing purposes
         },
         { status: 201 }
       )
