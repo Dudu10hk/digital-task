@@ -64,9 +64,35 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Load users from Supabase on mount
+  // Load users from Supabase on mount and restore session
   useEffect(() => {
     loadUsersFromSupabase()
+    
+    // ניסיון לשחזר את המשתמש המחובר מ-localStorage
+    const savedUser = localStorage.getItem('currentUser')
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser)
+        // אימות שהמשתמש עדיין קיים ב-DB
+        supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+          .then(({ data, error }) => {
+            if (data && !error) {
+              // עדכן עם הנתונים העדכניים מה-DB
+              setCurrentUser(data)
+              localStorage.setItem('currentUser', JSON.stringify(data))
+            } else {
+              // המשתמש לא קיים יותר - נקה localStorage
+              localStorage.removeItem('currentUser')
+            }
+          })
+      } catch (e) {
+        localStorage.removeItem('currentUser')
+      }
+    }
   }, [])
 
   async function loadUsersFromSupabase() {
@@ -198,13 +224,31 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       const { user } = await response.json()
       
       if (user) {
-        // Update users list if needed
-        const existingUserIndex = users.findIndex(u => u.id === user.id)
+        // עדכן את המשתמש ב-DB מבלי להסתמך על users state
+        const { data: freshUser, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', email)
+          .single()
+
+        if (error || !freshUser) {
+          console.error('Failed to fetch fresh user data:', error)
+          return false
+        }
+
+        // עדכן את רשימת המשתמשים אם צריך
+        const existingUserIndex = users.findIndex(u => u.id === freshUser.id)
         if (existingUserIndex === -1) {
-          setUsers(prev => [...prev, user])
+          setUsers(prev => [...prev, freshUser])
+        } else {
+          // עדכן משתמש קיים עם הנתונים העדכניים
+          setUsers(prev => prev.map(u => u.id === freshUser.id ? freshUser : u))
         }
         
-        setCurrentUser(user)
+        // שמור ב-localStorage למניעת איבוד מידע
+        localStorage.setItem('currentUser', JSON.stringify(freshUser))
+        
+        setCurrentUser(freshUser)
         return true
       }
       
@@ -217,6 +261,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setCurrentUser(null)
+    localStorage.removeItem('currentUser')
   }
 
   const updateUserRole = (userId: string, role: UserRole) => {
@@ -224,7 +269,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       prev.map((user) => (user.id === userId ? { ...user, role } : user))
     )
     if (currentUser?.id === userId) {
-      setCurrentUser((prev) => (prev ? { ...prev, role } : null))
+      const updatedUser = { ...currentUser, role }
+      setCurrentUser(updatedUser)
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser))
     }
   }
 
@@ -310,7 +357,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
       // Update current user if editing self
       if (currentUser.id === userId) {
-        setCurrentUser((prev) => (prev ? { ...prev, ...updates } : null))
+        const updatedUser = { ...currentUser, ...updates }
+        setCurrentUser(updatedUser)
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser))
       }
 
       return true

@@ -33,10 +33,18 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
   }
 
   const handleDragStart = (e: React.DragEvent, taskId: string, fromColumn: BoardColumn) => {
+    // צופים לא יכולים לגרור כלום
     if (isViewer()) {
       e.preventDefault()
       return
     }
+    
+    // משתמשים רגילים לא יכולים לגרור משימות בעמודת in-progress
+    if (fromColumn === "in-progress" && !isAdmin()) {
+      e.preventDefault()
+      return
+    }
+    
     setDraggedTaskId(taskId)
     setDraggedFromColumn(fromColumn)
     e.dataTransfer.effectAllowed = "move"
@@ -162,7 +170,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                           {index + 1}
                         </div>
                       )}
-                      {showPriorityNumber && (isViewer() || !canReorder) && (
+                      {/* מנעול מופיע רק למשתמשים שאינם אדמינים */}
+                      {showPriorityNumber && !isAdmin() && (
                         <div className="absolute -left-2 -top-2 z-10" title={isViewer() ? "צופה לא יכול לשנות סדר" : "רק מנהלים יכולים לשנות סדר"}>
                           <Lock className="w-4 h-4 text-muted-foreground" />
                         </div>
@@ -171,7 +180,10 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                         task={task}
                         compact
                         onEdit={() => setEditingTask(task)}
-                        draggable={!isViewer() && (canReorder || column.id !== "in-progress")}
+                        draggable={
+                          !isViewer() && 
+                          (column.id !== "in-progress" || isAdmin())
+                        }
                         onDragStart={(e) => handleDragStart(e, task.id, column.id)}
                       />
                     </div>
