@@ -12,32 +12,61 @@ export async function POST(request: Request) {
       )
     }
 
-    // בדיקת קוד
-    const { data: otpRecord, error: otpError } = await supabase
+    // בדיקת קוד - קודם בלי בדיקת זמן
+    const { data: allOtps, error: searchError } = await supabase
       .from('otp_codes')
       .select('*')
       .eq('email', email)
       .eq('code', code)
-      .eq('used', false)
-      .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
 
-    if (otpError) {
-      console.error('OTP lookup error:', otpError)
+    console.log('🔍 OTP Search Results:', {
+      email,
+      code,
+      found: allOtps?.length || 0,
+      records: allOtps?.map(otp => ({
+        expires_at: otp.expires_at,
+        used: otp.used,
+        created_at: otp.created_at,
+        now: new Date().toISOString()
+      }))
+    })
+
+    if (searchError) {
+      console.error('OTP lookup error:', searchError)
       return NextResponse.json(
         { error: 'Failed to verify OTP' },
         { status: 500 }
       )
     }
 
+    // מציאת הקוד הראשון שתקף
+    const otpRecord = allOtps?.find(otp => {
+      const expiresAt = new Date(otp.expires_at)
+      const now = new Date()
+      const isValid = !otp.used && expiresAt > now
+      
+      console.log('⏰ OTP Time Check:', {
+        code: otp.code,
+        expiresAt: expiresAt.toISOString(),
+        now: now.toISOString(),
+        diff_minutes: (expiresAt.getTime() - now.getTime()) / 60000,
+        used: otp.used,
+        isValid
+      })
+      
+      return isValid
+    })
+
     if (!otpRecord) {
+      console.log('❌ No valid OTP found')
       return NextResponse.json(
         { error: 'Invalid or expired code' },
         { status: 401 }
       )
     }
+
+    console.log('✅ Valid OTP found:', otpRecord.id)
 
     // סימון כמשומש
     const { error: updateError } = await supabase
