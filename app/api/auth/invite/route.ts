@@ -108,8 +108,11 @@ export async function POST(request: Request) {
       const resend = new Resend(apiKey)
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       
+      // בדיקה אם Resend במצב sandbox או production
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+      
       const result = await resend.emails.send({
-        from: 'TaskFlow <onboarding@resend.dev>',
+        from: `TaskFlow <${fromEmail}>`,
         to: email,
         subject: `${inviterName} הזמין אותך ל-TaskFlow! 🎉`,
         html: invitationEmailTemplate(name, code, inviterName, appUrl)

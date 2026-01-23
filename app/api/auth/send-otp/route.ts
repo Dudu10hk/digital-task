@@ -64,8 +64,12 @@ export async function POST(request: Request) {
       }
 
       const resend = new Resend(apiKey)
+      
+      // בדיקה אם Resend במצב sandbox או production
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+      
       const result = await resend.emails.send({
-        from: 'TaskFlow <onboarding@resend.dev>',
+        from: `TaskFlow <${fromEmail}>`,
         to: email,
         subject: 'קוד האימות שלך - TaskFlow',
         html: otpEmailTemplate(user.name, code)
