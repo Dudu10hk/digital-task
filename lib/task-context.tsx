@@ -13,7 +13,7 @@ import {
   loadArchivedTasks,
   saveArchivedTasks
 } from "./supabase-simple"
-import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation, StickyNote, ArchivedTask } from "./types"
+import type { Task, User, TaskStatus, BoardColumn, TaskComment, TaskHistoryEntry, Notification, InProgressStation, StickyNote, ArchivedTask, UserRole } from "./types"
 
 interface TaskContextType {
   tasks: Task[]
@@ -66,34 +66,80 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   // Load users from Supabase on mount and restore session
   useEffect(() => {
-    loadUsersFromSupabase()
-    
-    // ניסיון לשחזר את המשתמש המחובר מ-localStorage
-    const savedUser = localStorage.getItem('currentUser')
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser)
-        // אימות שהמשתמש עדיין קיים ב-DB
-        supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-          .then(({ data, error }) => {
-            if (data && !error) {
-              // עדכן עם הנתונים העדכניים מה-DB
-              setCurrentUser(data)
-              localStorage.setItem('currentUser', JSON.stringify(data))
-            } else {
-              // המשתמש לא קיים יותר - נקה localStorage
-              localStorage.removeItem('currentUser')
+    const initializeSession = async () => {
+      await loadUsersFromSupabase()
+      
+      // ניסיון לשחזר את המשתמש המחובר מ-localStorage
+      const savedUser = localStorage.getItem('currentUser')
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser)
+          // תמיד טען מחדש מה-DB כדי לקבל נתונים עדכניים
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+          
+          if (data && !error) {
+            // בדוק אם יש שינוי ב-role או נתונים אחרים
+            const hasChanges = JSON.stringify(data) !== JSON.stringify(user)
+            if (hasChanges) {
+              console.log('🔄 Refreshing user data from DB:', {
+                old_role: user.role,
+                new_role: data.role,
+                email: data.email
+              })
             }
-          })
-      } catch (e) {
-        localStorage.removeItem('currentUser')
+            // עדכן עם הנתונים העדכניים מה-DB
+            setCurrentUser(data)
+            localStorage.setItem('currentUser', JSON.stringify(data))
+          } else {
+            // המשתמש לא קיים יותר - נקה localStorage
+            console.log('❌ User not found in DB, clearing session')
+            localStorage.removeItem('currentUser')
+          }
+        } catch (e) {
+          console.error('Error restoring session:', e)
+          localStorage.removeItem('currentUser')
+        }
       }
     }
+    
+    initializeSession()
   }, [])
+
+  // Periodic refresh of current user from DB to catch role changes
+  useEffect(() => {
+    if (!currentUser) return
+    
+    const refreshInterval = setInterval(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', currentUser.id)
+          .single()
+        
+        if (data && !error && data.role !== currentUser.role) {
+          console.log('🔄 User role changed, updating:', {
+            old: currentUser.role,
+            new: data.role
+          })
+          setCurrentUser(data)
+          localStorage.setItem('currentUser', JSON.stringify(data))
+          toast.success('ההרשאות שלך עודכנו - הדף יתרענן', {
+            duration: 2000
+          })
+          setTimeout(() => window.location.reload(), 2000)
+        }
+      } catch (e) {
+        console.error('Failed to refresh user:', e)
+      }
+    }, 30000) // בדיקה כל 30 שניות
+    
+    return () => clearInterval(refreshInterval)
+  }, [currentUser])
 
   async function loadUsersFromSupabase() {
     try {
@@ -264,14 +310,31 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('currentUser')
   }
 
-  const updateUserRole = (userId: string, role: UserRole) => {
-    setUsers((prev) =>
-      prev.map((user) => (user.id === userId ? { ...user, role } : user))
-    )
-    if (currentUser?.id === userId) {
-      const updatedUser = { ...currentUser, role }
-      setCurrentUser(updatedUser)
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+  const updateUserRole = async (userId: string, role: UserRole) => {
+    try {
+      // עדכן ב-DB קודם
+      const { error } = await supabase
+        .from('users')
+        .update({ role })
+        .eq('id', userId)
+      
+      if (error) throw error
+      
+      // עדכן state מקומי
+      setUsers((prev) =>
+        prev.map((user) => (user.id === userId ? { ...user, role } : user))
+      )
+      
+      // אם מעדכנים את המשתמש המחובר - עדכן גם אותו
+      if (currentUser?.id === userId) {
+        const updatedUser = { ...currentUser, role }
+        setCurrentUser(updatedUser)
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+        console.log('✅ Updated current user role:', role)
+      }
+    } catch (error) {
+      console.error('Error updating user role:', error)
+      toast.error('שגיאה בעדכון הרשאות משתמש')
     }
   }
 

@@ -40,6 +40,29 @@ export function Dashboard() {
     hasOverdueDate: null,
   })
 
+  // Debug function to force refresh user from DB
+  const forceRefreshUser = async () => {
+    if (!currentUser) return
+    
+    try {
+      const response = await fetch('/api/debug/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentUser.email })
+      })
+      
+      const data = await response.json()
+      
+      if (data?.user) {
+        console.log('🔄 Force refreshing user:', data.user)
+        localStorage.setItem('currentUser', JSON.stringify(data.user))
+        window.location.reload()
+      }
+    } catch (e) {
+      console.error('Failed to refresh user:', e)
+    }
+  }
+
   const filteredTasks = applyFilters(tasks, filters)
 
   const views = [
