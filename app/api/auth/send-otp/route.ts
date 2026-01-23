@@ -3,8 +3,6 @@ import { supabase } from '@/lib/supabase'
 import { otpEmailTemplate } from '@/lib/email-templates'
 import { NextResponse } from 'next/server'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: Request) {
   try {
     const { email } = await request.json()
@@ -55,6 +53,7 @@ export async function POST(request: Request) {
 
     // שליחת מייל
     try {
+      const resend = new Resend(process.env.RESEND_API_KEY)
       await resend.emails.send({
         from: 'TaskFlow <onboarding@resend.dev>', // Resend's test email for development
         to: email,

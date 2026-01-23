@@ -4,8 +4,6 @@ import { invitationEmailTemplate } from '@/lib/email-templates'
 import { NextResponse } from 'next/server'
 import type { UserRole } from '@/lib/types'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function POST(request: Request) {
   try {
     const { name, email, role, adminId } = await request.json()
@@ -93,6 +91,7 @@ export async function POST(request: Request) {
 
     // שליחת מייל הזמנה
     try {
+      const resend = new Resend(process.env.RESEND_API_KEY)
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
       
       await resend.emails.send({
