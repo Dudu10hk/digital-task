@@ -74,33 +74,46 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       if (savedUser) {
         try {
           const user = JSON.parse(savedUser)
-          // תמיד טען מחדש מה-DB כדי לקבל נתונים עדכניים
-          const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', user.id)
-            .single()
           
-          if (data && !error) {
-            // בדוק אם יש שינוי ב-role או נתונים אחרים
-            const hasChanges = JSON.stringify(data) !== JSON.stringify(user)
-            if (hasChanges) {
-              console.log('🔄 Refreshing user data from DB:', {
-                old_role: user.role,
-                new_role: data.role,
-                email: data.email
-              })
+          // ניסיון לטעון מחדש מה-DB (fallback למשתמש שמור אם יש שגיאה)
+          try {
+            const { data, error } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', user.id)
+              .single()
+            
+            if (data && !error) {
+              // בדוק אם יש שינוי ב-role או נתונים אחרים
+              const hasChanges = JSON.stringify(data) !== JSON.stringify(user)
+              if (hasChanges) {
+                console.log('🔄 Refreshing user data from DB:', {
+                  old_role: user.role,
+                  new_role: data.role,
+                  email: data.email
+                })
+              }
+              // עדכן עם הנתונים העדכניים מה-DB
+              setCurrentUser(data)
+              localStorage.setItem('currentUser', JSON.stringify(data))
+            } else if (error?.code === 'PGRST116') {
+              // המשתמש לא קיים יותר ב-DB - נקה localStorage
+              console.log('❌ User not found in DB, clearing session')
+              localStorage.removeItem('currentUser')
+              setCurrentUser(null)
+            } else {
+              // שגיאה אחרת (חיבור וכו') - השתמש במשתמש השמור
+              console.log('⚠️ DB issue, using cached user:', error?.message)
+              setCurrentUser(user)
             }
-            // עדכן עם הנתונים העדכניים מה-DB
-            setCurrentUser(data)
-            localStorage.setItem('currentUser', JSON.stringify(data))
-          } else {
-            // המשתמש לא קיים יותר - נקה localStorage
-            console.log('❌ User not found in DB, clearing session')
-            localStorage.removeItem('currentUser')
+          } catch (dbError) {
+            // שגיאת חיבור/רשת - השתמש במשתמש השמור מ-localStorage
+            console.log('⚠️ DB connection error, using cached user')
+            setCurrentUser(user)
           }
         } catch (e) {
-          console.error('Error restoring session:', e)
+          // שגיאה ב-parse של JSON - נקה localStorage
+          console.error('Error parsing saved user:', e)
           localStorage.removeItem('currentUser')
         }
       }
@@ -248,6 +261,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<boolean> => {
     const user = users.find((u) => u.email === email)
     if (user && user.password === password) {
+      // שמור ב-localStorage למניעת התנתקות אחרי refresh
+      localStorage.setItem('currentUser', JSON.stringify(user))
       setCurrentUser(user)
       // Data will be loaded by useEffect when currentUser changes
       return true

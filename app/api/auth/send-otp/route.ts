@@ -76,13 +76,11 @@ export async function POST(request: Request) {
       console.error('Email sending failed (continuing anyway):', emailError.message)
     }
 
-    // תמיד מחזירים הצלחה + הקוד (במצב Test/Dev)
-    const isDev = process.env.NODE_ENV === 'development' || !process.env.RESEND_FROM_EMAIL
-    
+    // החזרת תגובה - ללא חשיפת הקוד!
     return NextResponse.json({
       success: true,
-      message: emailSent ? 'OTP sent successfully' : 'OTP generated (email not sent)',
-      ...(isDev && { code }) // מציג קוד רק במצב Test
+      message: emailSent ? 'OTP sent successfully' : 'OTP generated',
+      // אף פעם לא מחזירים את הקוד! (בעיית אבטחה)
     })
 
   } catch (error) {
