@@ -400,12 +400,51 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
       if (error) throw error
 
+      // תיקון: נקה את כל ההפניות למשתמש הנמחק מהמשימות
+      setTasks((prev) => 
+        prev.map((task) => {
+          let updated = { ...task }
+          
+          // נקה assignee אם זה המשתמש הנמחק
+          if (task.assigneeId === userId) {
+            updated = {
+              ...updated,
+              assigneeId: null,
+              assigneeName: null,
+              assigneeAvatar: null,
+            }
+          }
+          
+          // נקה handler אם זה המשתמש הנמחק
+          if (task.handlerId === userId) {
+            updated = {
+              ...updated,
+              handlerId: null,
+              handlerName: null,
+              handlerAvatar: null,
+            }
+          }
+          
+          // נקה מ-tagged users
+          if (task.taggedUserIds.includes(userId)) {
+            updated = {
+              ...updated,
+              taggedUserIds: task.taggedUserIds.filter(id => id !== userId),
+            }
+          }
+          
+          return updated
+        })
+      )
+
       // Remove user from users array
       setUsers((prev) => prev.filter((user) => user.id !== userId))
       
+      toast.success('המשתמש נמחק בהצלחה')
       return true
     } catch (error) {
-      // Error deleting user
+      console.error('Error deleting user:', error)
+      toast.error('שגיאה במחיקת המשתמש')
       return false
     }
   }
@@ -583,39 +622,59 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return
 
     const task = tasks.find((t) => t.id === taskId)
-    if (!task) return
-
-    const archivedTask: ArchivedTask = {
-      ...task,
-      archivedAt: new Date(),
-      archivedBy: currentUser.id,
-      archiveReason: reason,
+    if (!task) {
+      console.error('Task not found for archiving:', taskId)
+      toast.error('המשימה לא נמצאה')
+      return
     }
 
-    setArchivedTasks((prev) => [archivedTask, ...prev])
-    setTasks((prev) => prev.filter((t) => t.id !== taskId))
-    
-    if (reason === "completed") {
-      toast.success(`המשימה "${task.title}" הועברה לארכיון`)
+    try {
+      const archivedTask: ArchivedTask = {
+        ...task,
+        archivedAt: new Date(),
+        archivedBy: currentUser.id,
+        archiveReason: reason,
+      }
+
+      setArchivedTasks((prev) => [archivedTask, ...prev])
+      setTasks((prev) => prev.filter((t) => t.id !== taskId))
+      
+      if (reason === "completed") {
+        toast.success(`המשימה "${task.title}" הועברה לארכיון`)
+      } else {
+        toast.success(`המשימה "${task.title}" נמחקה`)
+      }
+    } catch (error) {
+      console.error('Error archiving task:', error)
+      toast.error('שגיאה בהעברה לארכיון')
     }
   }
 
   const restoreTask = (taskId: string) => {
     const archivedTask = archivedTasks.find((t) => t.id === taskId)
-    if (!archivedTask) return
-
-    const { archivedAt, archivedBy, archiveReason, ...taskData } = archivedTask
-    
-    // Restore to original column or todo
-    const restoredTask: Task = {
-      ...taskData,
-      column: archiveReason === "deleted" ? "todo" : taskData.column,
-      updatedAt: new Date(),
+    if (!archivedTask) {
+      console.error('Archived task not found:', taskId)
+      toast.error('המשימה לא נמצאה בארכיון')
+      return
     }
 
-    setTasks((prev) => [...prev, restoredTask])
-    setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
-    toast.success(`המשימה "${restoredTask.title}" שוחזרה בהצלחה`)
+    try {
+      const { archivedAt, archivedBy, archiveReason, ...taskData } = archivedTask
+      
+      // Restore to original column or todo
+      const restoredTask: Task = {
+        ...taskData,
+        column: archiveReason === "deleted" ? "todo" : taskData.column,
+        updatedAt: new Date(),
+      }
+
+      setTasks((prev) => [...prev, restoredTask])
+      setArchivedTasks((prev) => prev.filter((t) => t.id !== taskId))
+      toast.success(`המשימה "${restoredTask.title}" שוחזרה בהצלחה`)
+    } catch (error) {
+      console.error('Error restoring task:', error)
+      toast.error('שגיאה בשחזור המשימה')
+    }
   }
 
   const deleteTask = (id: string) => {
@@ -791,9 +850,21 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return
     
     const task = tasks.find(t => t.id === taskId)
-    if (!task) return
+    if (!task) {
+      console.error('Task not found:', taskId)
+      return
+    }
 
+    // תיקון: וידוא שהמשתמש קיים לפני עדכון
     const handler = handlerId ? users.find((u) => u.id === handlerId) : null
+    
+    // אם handlerId לא null אבל המשתמש לא נמצא - הצג שגיאה
+    if (handlerId && !handler) {
+      console.error('Handler user not found:', handlerId)
+      toast.error('המשתמש המבוקש לא נמצא במערכת')
+      return
+    }
+
     const oldHandlerName = task.handlerName
 
     setTasks((prev) =>
@@ -823,7 +894,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     )
 
     // Send notification to new handler
-    if (handlerId && handlerId !== currentUser.id) {
+    if (handlerId && handler && handlerId !== currentUser.id) {
       createNotification(
         "handler",
         task.id,
