@@ -69,6 +69,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const initializeSession = async () => {
       await loadUsersFromSupabase()
       
+      // בדוק שאנחנו בצד הלקוח (localStorage זמין רק בדפדפן)
+      if (typeof window === 'undefined') return
+      
       // ניסיון לשחזר את המשתמש המחובר מ-localStorage
       const savedUser = localStorage.getItem('currentUser')
       if (savedUser) {
@@ -140,7 +143,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
             new: data.role
           })
           setCurrentUser(data)
-          localStorage.setItem('currentUser', JSON.stringify(data))
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('currentUser', JSON.stringify(data))
+          }
           toast.success('ההרשאות שלך עודכנו - הדף יתרענן', {
             duration: 2000
           })
@@ -262,7 +267,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     const user = users.find((u) => u.email === email)
     if (user && user.password === password) {
       // שמור ב-localStorage למניעת התנתקות אחרי refresh
-      localStorage.setItem('currentUser', JSON.stringify(user))
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentUser', JSON.stringify(user))
+      }
       setCurrentUser(user)
       // Data will be loaded by useEffect when currentUser changes
       return true
@@ -307,7 +314,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
         
         // שמור ב-localStorage למניעת איבוד מידע
-        localStorage.setItem('currentUser', JSON.stringify(freshUser))
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentUser', JSON.stringify(freshUser))
+        }
         
         setCurrentUser(freshUser)
         return true
@@ -322,7 +331,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setCurrentUser(null)
-    localStorage.removeItem('currentUser')
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('currentUser')
+    }
   }
 
   const updateUserRole = async (userId: string, role: UserRole) => {
@@ -344,7 +355,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       if (currentUser?.id === userId) {
         const updatedUser = { ...currentUser, role }
         setCurrentUser(updatedUser)
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+        }
         console.log('✅ Updated current user role:', role)
       }
     } catch (error) {
@@ -476,7 +489,9 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       if (currentUser.id === userId) {
         const updatedUser = { ...currentUser, ...updates }
         setCurrentUser(updatedUser)
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+        }
       }
 
       return true
