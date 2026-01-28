@@ -841,20 +841,17 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     // Update local state immediately for smooth UX
     setTasks(updatedTasks)
 
-    // Save to database
+    // Save to database using saveTasks (JSONB-compatible)
     try {
-      const tasksToUpdate = updatedTasks.filter(t => t.column === column)
-      console.log('💾 Saving to Supabase:', tasksToUpdate.length, 'tasks')
+      console.log('💾 Saving all tasks to Supabase with JSONB structure')
+      const success = await saveTasks(updatedTasks)
       
-      for (const t of tasksToUpdate) {
-        await supabase
-          .from('tasks')
-          .update({ order: t.order, updated_at: t.updatedAt.toISOString() })
-          .eq('id', t.id)
+      if (success) {
+        console.log('✅ Successfully saved to Supabase')
+        toast.success('הסדר עודכן בהצלחה')
+      } else {
+        throw new Error('saveTasks returned false')
       }
-      
-      console.log('✅ Successfully saved to Supabase')
-      toast.success('הסדר עודכן בהצלחה')
     } catch (error) {
       console.error('❌ Error saving to Supabase:', error)
       toast.error('שגיאה בעדכון הסדר')
