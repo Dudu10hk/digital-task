@@ -237,7 +237,7 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                             />
                           ) : (
                             <div className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md group-hover:scale-110 group-hover:bg-primary/90 transition-all">
-                              {index + 1}
+                              {task.order}
                             </div>
                           )}
                         </div>
