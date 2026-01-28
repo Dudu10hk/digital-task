@@ -60,14 +60,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
     e.preventDefault()
     e.stopPropagation()
     
-    // Allow reorder if:
-    // 1. Dragging within same column AND column allows reorder
-    // 2. OR dragging to in-progress column (even from other columns) AND user has permission
-    const allowReorder = 
-      (draggedFromColumn === columnId && canReorderInColumn(columnId)) ||
-      (columnId === "in-progress" && canReorderInColumn(columnId))
-    
-    if (allowReorder) {
+    // Allow reorder only within same column and if permitted
+    if (draggedFromColumn === columnId && canReorderInColumn(columnId)) {
       setDropTargetIndex(index)
     }
     setDragOverColumn(columnId)
@@ -154,8 +148,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                 dragOverColumn === column.id ? "bg-primary/5 ring-2 ring-primary/20 ring-dashed" : "bg-muted/30"
               }`}
             >
-              {/* Drop zone at the top - show when dragging within same column OR for in-progress */}
-              {draggedTaskId && (draggedFromColumn === column.id || (column.id === "in-progress" && canReorderInColumn(column.id))) && (
+              {/* Drop zone at the top - show when dragging within same column */}
+              {draggedTaskId && draggedFromColumn === column.id && canReorderInColumn(column.id) && (
                 <div
                   className={`h-0.5 mb-2 rounded-full transition-all duration-200 ${
                     dropTargetIndex === 0 ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
@@ -166,21 +160,21 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
               )}
 
               {columnTasks.map((task, index) => {
-                const showPriorityNumber = column.id === "in-progress"
+                const showPriorityNumber = canReorderInColumn(column.id) // הצג מספר בכל עמודה שמאפשרת סידור מחדש
                 const canReorder = canReorderInColumn(column.id)
                 const isDropTargetBefore = dropTargetIndex === index + 1
                 
                 return (
                   <div key={task.id} className="mb-3">
                     <div className="relative">
-                      {/* מספר תיעדוף - לכל העמודות! */}
+                      {/* מספר תיעדוף - לכל העמודות שמאפשרות סידור מחדש */}
                       {showPriorityNumber && (
                         <div className="absolute -right-2 -top-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md">
                           {index + 1}
                         </div>
                       )}
                       {/* מנעול מופיע רק למשתמשים שאינם אדמינים בעמודת in-progress */}
-                      {showPriorityNumber && !isAdmin() && (
+                      {column.id === "in-progress" && !isAdmin() && (
                         <div className="absolute -left-2 -top-2 z-10" title={isViewer() ? "צופה לא יכול לשנות סדר" : "רק מנהלים יכולים לשנות סדר"}>
                           <Lock className="w-4 h-4 text-muted-foreground" />
                         </div>
@@ -197,8 +191,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                       />
                     </div>
                     
-                    {/* Drop zone after each task - show when dragging within same column OR for in-progress */}
-                    {draggedTaskId && (draggedFromColumn === column.id || (column.id === "in-progress" && canReorder)) && (
+                    {/* Drop zone after each task - show when dragging within same column */}
+                    {draggedTaskId && draggedFromColumn === column.id && canReorder && (
                       <div
                         className={`h-0.5 mt-2 rounded-full transition-all duration-200 ${
                           isDropTargetBefore ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
