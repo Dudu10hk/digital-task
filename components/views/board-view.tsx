@@ -168,7 +168,7 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
               {draggedTaskId && draggedFromColumn === column.id && canReorderInColumn(column.id) && (
                 <div
                   className={`h-0.5 mb-2 rounded-full transition-all duration-200 ${
-                    dropTargetIndex === 0 ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
+                    dropTargetIndex === 1 ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
                   }`}
                   onDragOver={(e) => handleDragOverDropZone(e, column.id, 1)}
                   onDrop={(e) => handleDropAtIndex(e, column.id, 1)}
@@ -178,7 +178,7 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
               {columnTasks.map((task, index) => {
                 const showPriorityNumber = canReorderInColumn(column.id) // הצג מספר בכל עמודה שמאפשרת סידור מחדש
                 const canReorder = canReorderInColumn(column.id)
-                const isDropTargetBefore = dropTargetIndex === index + 1
+                const isDropTargetBefore = dropTargetIndex === task.order + 1
                 
                 return (
                   <div key={task.id} className="mb-3">
@@ -213,8 +213,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                         className={`h-0.5 mt-2 rounded-full transition-all duration-200 ${
                           isDropTargetBefore ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
                         }`}
-                        onDragOver={(e) => handleDragOverDropZone(e, column.id, index + 2)}
-                        onDrop={(e) => handleDropAtIndex(e, column.id, index + 2)}
+                        onDragOver={(e) => handleDragOverDropZone(e, column.id, task.order + 1)}
+                        onDrop={(e) => handleDropAtIndex(e, column.id, task.order + 1)}
                       />
                     )}
                   </div>
