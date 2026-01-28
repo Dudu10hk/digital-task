@@ -46,6 +46,7 @@ interface TaskContextType {
   addUser: (user: Omit<User, "id">) => Promise<void>
   deleteUser: (userId: string) => Promise<boolean>
   editUser: (userId: string, updates: Partial<Omit<User, "id">>) => Promise<boolean>
+  updateUserAvatar: (avatarUrl: string) => Promise<boolean>
   archiveTask: (taskId: string, reason: "completed" | "deleted") => void
   restoreTask: (taskId: string) => void
   addStickyNote: (content: string, color: StickyNote["color"]) => void
@@ -497,6 +498,38 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       return true
     } catch (error) {
       // Error editing user
+      return false
+    }
+  }
+
+  const updateUserAvatar = async (avatarUrl: string): Promise<boolean> => {
+    if (!currentUser) return false
+
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ avatar: avatarUrl })
+        .eq('id', currentUser.id)
+
+      if (error) throw error
+
+      // עדכן את המשתמש המקומי
+      const updatedUser = { ...currentUser, avatar: avatarUrl }
+      setCurrentUser(updatedUser)
+      
+      // עדכן ב-localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+      }
+
+      // עדכן ברשימת המשתמשים
+      setUsers((prev) =>
+        prev.map((user) => (user.id === currentUser.id ? updatedUser : user))
+      )
+
+      return true
+    } catch (error) {
+      console.error('Error updating avatar:', error)
       return false
     }
   }
@@ -996,6 +1029,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         addUser,
         deleteUser,
         editUser,
+        updateUserAvatar,
         archiveTask,
         restoreTask,
         addStickyNote,

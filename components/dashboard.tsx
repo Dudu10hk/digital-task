@@ -20,7 +20,8 @@ import { NotificationsPanel } from "@/components/notifications-panel"
 import { UserManagement } from "@/components/user-management"
 import { StickyNotesSidebar } from "@/components/sticky-notes-sidebar"
 import { LoadingSpinner } from "@/components/loading-spinner"
-import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Crown, Archive, BarChart3 } from "lucide-react"
+import { ProfileDialog } from "@/components/profile-dialog"
+import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Crown, Archive, BarChart3, Settings } from "lucide-react"
 import { AdvancedFilters, applyFilters, type FilterOptions } from "@/components/advanced-filters"
 import { StatisticsDashboard } from "@/components/statistics-dashboard"
 
@@ -30,6 +31,7 @@ export function Dashboard() {
   const { currentUser, logout, tasks, isAdmin, isViewer, loading } = useTaskContext()
   const [currentView, setCurrentView] = useState<ViewType>("board")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false)
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: "",
     priority: "all",
@@ -140,6 +142,11 @@ export function Dashboard() {
                   </p>
                 </div>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsProfileDialogOpen(true)} className="gap-2">
+                  <Settings className="w-4 h-4" />
+                  עדכון פרופיל
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout} className="gap-2 text-destructive focus:text-destructive">
                   <LogOut className="w-4 h-4" />
                   התנתקות
@@ -179,6 +186,9 @@ export function Dashboard() {
 
       {/* Create Task Dialog */}
       <TaskDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} mode="create" />
+      
+      {/* Profile Dialog */}
+      <ProfileDialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen} />
       </div>
     </div>
   )
