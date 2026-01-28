@@ -91,7 +91,7 @@ export function StickyNotesSidebar() {
 
       {/* Sidebar */}
       <div
-        className={`fixed left-0 top-0 h-full w-[260px] sm:w-[280px] bg-card border-r shadow-xl z-50 transition-transform duration-300 ${
+        className={`fixed left-0 top-16 sm:top-20 h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] w-[260px] sm:w-[280px] bg-card border-r shadow-xl z-50 transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
