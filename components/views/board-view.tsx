@@ -146,8 +146,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                 dragOverColumn === column.id ? "bg-primary/5 ring-2 ring-primary/20 ring-dashed" : "bg-muted/30"
               }`}
             >
-              {/* Drop zone at the top - only for in-progress */}
-              {draggedTaskId && column.id === "in-progress" && canReorderInColumn(column.id) && (
+              {/* Drop zone at the top - for all columns that allow reordering */}
+              {draggedTaskId && draggedFromColumn === column.id && canReorderInColumn(column.id) && (
                 <div
                   className={`h-0.5 mb-2 rounded-full transition-all duration-200 ${
                     dropTargetIndex === 0 ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
@@ -165,12 +165,13 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                 return (
                   <div key={task.id} className="mb-3">
                     <div className="relative">
+                      {/* מספר תיעדוף - לכל העמודות! */}
                       {showPriorityNumber && (
                         <div className="absolute -right-2 -top-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md">
                           {index + 1}
                         </div>
                       )}
-                      {/* מנעול מופיע רק למשתמשים שאינם אדמינים */}
+                      {/* מנעול מופיע רק למשתמשים שאינם אדמינים בעמודת in-progress */}
                       {showPriorityNumber && !isAdmin() && (
                         <div className="absolute -left-2 -top-2 z-10" title={isViewer() ? "צופה לא יכול לשנות סדר" : "רק מנהלים יכולים לשנות סדר"}>
                           <Lock className="w-4 h-4 text-muted-foreground" />
@@ -188,8 +189,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                       />
                     </div>
                     
-                    {/* Drop zone after each task - only for in-progress */}
-                    {draggedTaskId && column.id === "in-progress" && canReorder && (
+                    {/* Drop zone after each task - for all columns that allow reordering */}
+                    {draggedTaskId && draggedFromColumn === column.id && canReorder && (
                       <div
                         className={`h-0.5 mt-2 rounded-full transition-all duration-200 ${
                           isDropTargetBefore ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
