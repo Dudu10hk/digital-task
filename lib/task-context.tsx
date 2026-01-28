@@ -789,42 +789,79 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     // עכשיו רק המשתמש יכול להעביר לארכיון באופן ידני
   }
 
-  const reorderTaskInColumn = (taskId: string, newOrder: number, column: BoardColumn) => {
+  const reorderTaskInColumn = async (taskId: string, newOrder: number, column: BoardColumn) => {
     if (!currentUser) return
     
+    console.log('🔄 reorderTaskInColumn called:', { taskId, newOrder, column })
+    
     // Only admins can reorder in "in-progress" column
-    if (column === "in-progress" && currentUser.role !== "admin") return
+    if (column === "in-progress" && currentUser.role !== "admin") {
+      console.log('❌ Not admin, cannot reorder in-progress')
+      return
+    }
 
     const task = tasks.find(t => t.id === taskId)
-    if (!task || task.column !== column) return
+    if (!task || task.column !== column) {
+      console.log('❌ Task not found or wrong column:', { task, column })
+      return
+    }
 
     const oldOrder = task.order
-    if (oldOrder === newOrder) return
+    if (oldOrder === newOrder) {
+      console.log('❌ Same order, no change needed')
+      return
+    }
 
-    setTasks(prev => {
-      return prev.map(t => {
-        if (t.column !== column) return t
-        
-        if (t.id === taskId) {
-          return { ...t, order: newOrder, updatedAt: new Date() }
+    console.log('✅ Reordering:', { oldOrder, newOrder, taskTitle: task.title })
+
+    // Calculate new orders for all affected tasks
+    const updatedTasks = tasks.map(t => {
+      if (t.column !== column) return t
+      
+      if (t.id === taskId) {
+        return { ...t, order: newOrder, updatedAt: new Date() }
+      }
+      
+      // Shift other tasks
+      if (oldOrder < newOrder) {
+        // Moving down: shift tasks between old and new position up
+        if (t.order > oldOrder && t.order <= newOrder) {
+          return { ...t, order: t.order - 1 }
         }
-        
-        // Shift other tasks
-        if (oldOrder < newOrder) {
-          // Moving down: shift tasks between old and new position up
-          if (t.order > oldOrder && t.order <= newOrder) {
-            return { ...t, order: t.order - 1 }
-          }
-        } else {
-          // Moving up: shift tasks between new and old position down
-          if (t.order >= newOrder && t.order < oldOrder) {
-            return { ...t, order: t.order + 1 }
-          }
+      } else {
+        // Moving up: shift tasks between new and old position down
+        if (t.order >= newOrder && t.order < oldOrder) {
+          return { ...t, order: t.order + 1 }
         }
-        
-        return t
-      })
+      }
+      
+      return t
     })
+
+    // Update local state immediately for smooth UX
+    setTasks(updatedTasks)
+
+    // Save to database
+    try {
+      const tasksToUpdate = updatedTasks.filter(t => t.column === column)
+      console.log('💾 Saving to Supabase:', tasksToUpdate.length, 'tasks')
+      
+      for (const t of tasksToUpdate) {
+        await supabase
+          .from('tasks')
+          .update({ order: t.order, updated_at: t.updatedAt.toISOString() })
+          .eq('id', t.id)
+      }
+      
+      console.log('✅ Successfully saved to Supabase')
+      toast.success('הסדר עודכן בהצלחה')
+    } catch (error) {
+      console.error('❌ Error saving to Supabase:', error)
+      toast.error('שגיאה בעדכון הסדר')
+      // Reload tasks from server on error
+      const freshTasks = await loadTasks()
+      setTasks(freshTasks)
+    }
   }
 
   const updateInProgressStation = (taskId: string, station: InProgressStation, note?: string) => {
