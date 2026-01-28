@@ -18,6 +18,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
   const [dragOverColumn, setDragOverColumn] = useState<BoardColumn | null>(null)
   const [draggedFromColumn, setDraggedFromColumn] = useState<BoardColumn | null>(null)
   const [dropTargetIndex, setDropTargetIndex] = useState<number | null>(null)
+  const [editingOrderTaskId, setEditingOrderTaskId] = useState<string | null>(null)
+  const [newOrderValue, setNewOrderValue] = useState<string>("")
 
   const getTasksByColumn = (column: BoardColumn) => {
     return filteredTasks
@@ -89,6 +91,36 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
     if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
       setDragOverColumn(null)
       setDropTargetIndex(null)
+    }
+  }
+
+  const handleOrderClick = (task: Task, column: BoardColumn) => {
+    if (!canReorderInColumn(column)) return
+    setEditingOrderTaskId(task.id)
+    setNewOrderValue(task.order.toString())
+  }
+
+  const handleOrderChange = (taskId: string, column: BoardColumn) => {
+    const newOrder = parseInt(newOrderValue)
+    const columnTasks = getTasksByColumn(column)
+    
+    if (isNaN(newOrder) || newOrder < 1 || newOrder > columnTasks.length) {
+      setEditingOrderTaskId(null)
+      setNewOrderValue("")
+      return
+    }
+
+    reorderTaskInColumn(taskId, newOrder, column)
+    setEditingOrderTaskId(null)
+    setNewOrderValue("")
+  }
+
+  const handleOrderKeyDown = (e: React.KeyboardEvent, taskId: string, column: BoardColumn) => {
+    if (e.key === 'Enter') {
+      handleOrderChange(taskId, column)
+    } else if (e.key === 'Escape') {
+      setEditingOrderTaskId(null)
+      setNewOrderValue("")
     }
   }
 
@@ -185,8 +217,29 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                     <div className="relative">
                       {/* מספר תיעדוף - לכל העמודות שמאפשרות סידור מחדש */}
                       {showPriorityNumber && (
-                        <div className="absolute -right-2 -top-2 z-10 flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md">
-                          {index + 1}
+                        <div 
+                          className="absolute -right-2 -top-2 z-10 flex items-center justify-center w-8 h-8 cursor-pointer group"
+                          onClick={() => handleOrderClick(task, column.id)}
+                          title="לחץ לשינוי מיקום"
+                        >
+                          {editingOrderTaskId === task.id ? (
+                            <input
+                              type="number"
+                              min="1"
+                              max={columnTasks.length}
+                              value={newOrderValue}
+                              onChange={(e) => setNewOrderValue(e.target.value)}
+                              onBlur={() => handleOrderChange(task.id, column.id)}
+                              onKeyDown={(e) => handleOrderKeyDown(e, task.id, column.id)}
+                              className="w-8 h-8 text-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md border-2 border-primary-foreground focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary"
+                              autoFocus
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          ) : (
+                            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md group-hover:scale-110 group-hover:bg-primary/90 transition-all">
+                              {index + 1}
+                            </div>
+                          )}
                         </div>
                       )}
                       {/* מנעול מופיע רק למשתמשים שאינם אדמינים בעמודת in-progress */}
