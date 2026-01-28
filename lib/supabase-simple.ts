@@ -28,7 +28,29 @@ export async function loadTasks(): Promise<Task[]> {
       .order('created_at', { ascending: true })
     
     if (error) throw error
-    return (data || []).map(row => row.data as Task)
+    
+    // המר תאריכים מ-string ל-Date objects
+    return (data || []).map(row => {
+      const task = row.data as Task
+      return {
+        ...task,
+        dueDate: task.dueDate ? new Date(task.dueDate) : null,
+        createdAt: new Date(task.createdAt),
+        updatedAt: new Date(task.updatedAt),
+        comments: task.comments.map(c => ({
+          ...c,
+          createdAt: new Date(c.createdAt)
+        })),
+        history: task.history.map(h => ({
+          ...h,
+          timestamp: new Date(h.timestamp)
+        })),
+        files: task.files.map(f => ({
+          ...f,
+          uploadedAt: new Date(f.uploadedAt)
+        }))
+      }
+    })
   } catch (error) {
     console.error('Error loading tasks:', error)
     return []
@@ -66,7 +88,15 @@ export async function loadNotifications(userId: string): Promise<Notification[]>
       .order('created_at', { ascending: false })
     
     if (error) throw error
-    return (data || []).map(row => row.data as Notification)
+    
+    // המר תאריכים מ-string ל-Date objects
+    return (data || []).map(row => {
+      const notification = row.data as Notification
+      return {
+        ...notification,
+        createdAt: new Date(notification.createdAt)
+      }
+    })
   } catch (error) {
     console.error('Error loading notifications:', error)
     return []
@@ -104,7 +134,16 @@ export async function loadStickyNotes(userId: string): Promise<StickyNote[]> {
       .order('created_at', { ascending: false })
     
     if (error) throw error
-    return (data || []).map(row => row.data as StickyNote)
+    
+    // המר תאריכים מ-string ל-Date objects
+    return (data || []).map(row => {
+      const note = row.data as StickyNote
+      return {
+        ...note,
+        createdAt: new Date(note.createdAt),
+        updatedAt: new Date(note.updatedAt)
+      }
+    })
   } catch (error) {
     console.error('Error loading sticky notes:', error)
     return []
@@ -138,7 +177,30 @@ export async function loadArchivedTasks(): Promise<ArchivedTask[]> {
       .order('archived_at', { ascending: false })
     
     if (error) throw error
-    return (data || []).map(row => row.data as ArchivedTask)
+    
+    // המר תאריכים מ-string ל-Date objects
+    return (data || []).map(row => {
+      const task = row.data as ArchivedTask
+      return {
+        ...task,
+        dueDate: task.dueDate ? new Date(task.dueDate) : null,
+        createdAt: new Date(task.createdAt),
+        updatedAt: new Date(task.updatedAt),
+        archivedAt: new Date(task.archivedAt),
+        comments: task.comments.map(c => ({
+          ...c,
+          createdAt: new Date(c.createdAt)
+        })),
+        history: task.history.map(h => ({
+          ...h,
+          timestamp: new Date(h.timestamp)
+        })),
+        files: task.files.map(f => ({
+          ...f,
+          uploadedAt: new Date(f.uploadedAt)
+        }))
+      }
+    })
   } catch (error) {
     console.error('Error loading archived tasks:', error)
     return []
