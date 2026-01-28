@@ -60,8 +60,14 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
     e.preventDefault()
     e.stopPropagation()
     
-    // Only allow reorder within same column and if permitted
-    if (canReorderInColumn(columnId)) {
+    // Allow reorder if:
+    // 1. Dragging within same column AND column allows reorder
+    // 2. OR dragging to in-progress column (even from other columns) AND user has permission
+    const allowReorder = 
+      (draggedFromColumn === columnId && canReorderInColumn(columnId)) ||
+      (columnId === "in-progress" && canReorderInColumn(columnId))
+    
+    if (allowReorder) {
       setDropTargetIndex(index)
     }
     setDragOverColumn(columnId)
@@ -86,14 +92,16 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
 
     // If reordering within same column
     if (draggedFromColumn === columnId && canReorderInColumn(columnId)) {
+      console.log('🔄 Reordering within same column:', { taskId: draggedTaskId, targetIndex, columnId })
       reorderTaskInColumn(draggedTaskId, targetIndex, columnId)
     } else if (draggedFromColumn !== columnId) {
       // Moving to different column - place at specific position
+      console.log('📦 Moving to different column:', { taskId: draggedTaskId, from: draggedFromColumn, to: columnId, targetIndex })
       updateTaskColumn(draggedTaskId, columnId)
       // After moving, reorder to the target position
       setTimeout(() => {
         reorderTaskInColumn(draggedTaskId, targetIndex, columnId)
-      }, 0)
+      }, 100)
     }
 
     setDraggedTaskId(null)
@@ -146,8 +154,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                 dragOverColumn === column.id ? "bg-primary/5 ring-2 ring-primary/20 ring-dashed" : "bg-muted/30"
               }`}
             >
-              {/* Drop zone at the top - for all columns that allow reordering */}
-              {draggedTaskId && draggedFromColumn === column.id && canReorderInColumn(column.id) && (
+              {/* Drop zone at the top - show when dragging within same column OR for in-progress */}
+              {draggedTaskId && (draggedFromColumn === column.id || (column.id === "in-progress" && canReorderInColumn(column.id))) && (
                 <div
                   className={`h-0.5 mb-2 rounded-full transition-all duration-200 ${
                     dropTargetIndex === 0 ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
@@ -189,8 +197,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                       />
                     </div>
                     
-                    {/* Drop zone after each task - for all columns that allow reordering */}
-                    {draggedTaskId && draggedFromColumn === column.id && canReorder && (
+                    {/* Drop zone after each task - show when dragging within same column OR for in-progress */}
+                    {draggedTaskId && (draggedFromColumn === column.id || (column.id === "in-progress" && canReorder)) && (
                       <div
                         className={`h-0.5 mt-2 rounded-full transition-all duration-200 ${
                           isDropTargetBefore ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
