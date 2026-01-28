@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -28,6 +28,13 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar || "")
   const [uploadMethod, setUploadMethod] = useState<"upload" | "url">("upload")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // עדכן את avatarUrl כש-currentUser משתנה או כשהדיאלוג נפתח
+  useEffect(() => {
+    if (open && currentUser) {
+      setAvatarUrl(currentUser.avatar || "")
+    }
+  }, [open, currentUser])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
