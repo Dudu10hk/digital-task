@@ -33,18 +33,23 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
   }
 
   const handleDragStart = (e: React.DragEvent, taskId: string, fromColumn: BoardColumn) => {
+    console.log('🎯 Drag Start:', { taskId, fromColumn, isViewer: isViewer(), isAdmin: isAdmin() })
+    
     // צופים לא יכולים לגרור כלום
     if (isViewer()) {
+      console.log('❌ Viewer cannot drag')
       e.preventDefault()
       return
     }
     
     // משתמשים רגילים לא יכולים לגרור משימות בעמודת in-progress
     if (fromColumn === "in-progress" && !isAdmin()) {
+      console.log('❌ Non-admin cannot drag in-progress')
       e.preventDefault()
       return
     }
     
+    console.log('✅ Drag allowed')
     setDraggedTaskId(taskId)
     setDraggedFromColumn(fromColumn)
     e.dataTransfer.effectAllowed = "move"
@@ -60,9 +65,20 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
     e.preventDefault()
     e.stopPropagation()
     
+    console.log('📍 Drag Over Drop Zone:', { 
+      columnId, 
+      index, 
+      draggedFromColumn,
+      canReorder: canReorderInColumn(columnId),
+      sameColumn: draggedFromColumn === columnId 
+    })
+    
     // Allow reorder only within same column and if permitted
     if (draggedFromColumn === columnId && canReorderInColumn(columnId)) {
+      console.log('✅ Setting drop target index:', index)
       setDropTargetIndex(index)
+    } else {
+      console.log('❌ Cannot reorder here')
     }
     setDragOverColumn(columnId)
   }
