@@ -63,6 +63,7 @@ import {
 } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
+import { sanitizeString } from "@/lib/validation"
 
 interface TaskDetailSheetProps {
   task: Task
@@ -236,7 +237,7 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
   }
 
   const renderCommentWithMentions = (content: string) => {
-    let result = content
+    let result = sanitizeString(content)
     users.forEach((user) => {
       const mention = `@${user.name}`
       result = result.replace(new RegExp(mention, "g"), `<span class="text-primary font-semibold">${mention}</span>`)
@@ -634,14 +635,14 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                           <div 
                             className="prose prose-sm max-w-none dark:prose-invert"
                             dangerouslySetInnerHTML={{
-                              __html: task.description
+                              __html: sanitizeString(task.description)
                                 .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-4 mb-2">$1</h2>')
                                 .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>')
                                 .replace(/\*(.+?)\*/g, '<em class="italic">$1</em>')
                                 .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">$1</code>')
                                 .replace(/^- (.+)$/gm, '<li class="mr-6">$1</li>')
                                 .replace(/^(\d+)\. (.+)$/gm, '<li class="mr-6 list-decimal">$2</li>')
-                                .replace(/(<li.*<\/li>)/s, '<ul class="space-y-1">$1</ul>')
+                                .replace(/(<li[\s\S]*<\/li>)/g, '<ul class="space-y-1">$1</ul>')
                                 .replace(/```\n([\s\S]*?)\n```/g, '<pre class="bg-muted p-4 rounded-lg overflow-x-auto"><code class="font-mono text-sm">$1</code></pre>')
                                 .replace(/\n\n/g, '<br/><br/>')
                                 .replace(/\n/g, '<br/>')

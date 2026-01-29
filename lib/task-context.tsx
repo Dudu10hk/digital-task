@@ -619,8 +619,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
         Object.keys(updates).forEach((key) => {
           if (key !== "history" && key !== "updatedAt") {
-            const oldValue = String((task as Record<string, unknown>)[key] || "")
-            const newValue = String((updates as Record<string, unknown>)[key] || "")
+            const oldValue = String((task as any)[key] || "")
+            const newValue = String((updates as any)[key] || "")
             if (oldValue !== newValue) {
               historyEntries.push({
                 id: Date.now().toString() + key,

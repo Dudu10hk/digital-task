@@ -86,10 +86,4 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-// הגדרת תצורה למולטיפארט
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
+// Note: bodyParser config is deprecated in Next.js App Router

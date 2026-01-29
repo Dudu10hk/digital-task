@@ -11,6 +11,16 @@ export const statusConfig: Record<TaskStatus, { label: string; color: string; bg
     color: "bg-blue-500",
     bgClass: "bg-blue-50 text-blue-700 border-blue-200 shadow-sm",
   },
+  review: {
+    label: "בבדיקה",
+    color: "bg-purple-500",
+    bgClass: "bg-purple-50 text-purple-700 border-purple-200 shadow-sm",
+  },
+  blocked: {
+    label: "חסום",
+    color: "bg-red-500",
+    bgClass: "bg-red-50 text-red-700 border-red-200 shadow-sm",
+  },
   done: {
     label: "הושלם",
     color: "bg-emerald-500",

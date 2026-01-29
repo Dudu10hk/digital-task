@@ -41,6 +41,14 @@ export function ListView({ filteredTasks }: { filteredTasks: Task[] }) {
     low: "bg-blue-500 text-white border-0",
   }
 
+  const taskCountByStatus = useMemo(() => {
+    const counts: Partial<Record<TaskStatus, number>> = {}
+    filteredTasks.forEach((task) => {
+      counts[task.status] = (counts[task.status] || 0) + 1
+    })
+    return counts
+  }, [filteredTasks])
+
   const filteredAndSortedTasks = useMemo(() => {
     let result = [...filteredTasks]
 
@@ -68,12 +76,21 @@ export function ListView({ filteredTasks }: { filteredTasks: Task[] }) {
           comparison = a.title.localeCompare(b.title, "he")
           break
         case "status":
-          const statusOrder = { todo: 0, "in-progress": 1, review: 2, blocked: 3, "on-hold": 4, done: 5, canceled: 6 }
-          comparison = statusOrder[a.status] - statusOrder[b.status]
+          const statusOrder: Record<TaskStatus, number> = { 
+            todo: 0, 
+            "in-progress": 1, 
+            review: 2, 
+            blocked: 3, 
+            "on-hold": 4, 
+            done: 5, 
+            canceled: 6,
+            qa: 7
+          }
+          comparison = (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0)
           break
         case "priority":
-          const priorityOrder = { high: 0, medium: 1, low: 2 }
-          comparison = priorityOrder[a.priority] - priorityOrder[b.priority]
+          const priorityOrder: Record<TaskPriority, number> = { high: 0, medium: 1, low: 2 }
+          comparison = (priorityOrder[a.priority] || 1) - (priorityOrder[b.priority] || 1)
           break
         case "dueDate":
           const dateA = a.dueDate?.getTime() || Number.POSITIVE_INFINITY

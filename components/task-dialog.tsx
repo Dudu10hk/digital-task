@@ -14,6 +14,7 @@ import { statusConfig, statusOptions, boardColumns, inProgressStationOptions } f
 import type { Task, TaskStatus, TaskPriority, BoardColumn, InProgressStation } from "@/lib/types"
 import { Link2, Upload, X, FileText, FileSpreadsheet, File, Wrench, Palette, Code, TestTube, Search, Users, Layers, Maximize2, Bold, Italic, List as ListIcon, ListOrdered, Heading2 } from "lucide-react"
 import type { TaskFile } from "@/lib/types"
+import { sanitizeString } from "@/lib/validation"
 
 interface TaskDialogProps {
   open: boolean
@@ -377,24 +378,24 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
                     <div className="px-4 py-2 bg-muted/20 border-b">
                       <span className="text-xs font-semibold text-muted-foreground">תצוגה מקדימה</span>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-6">
-                      {description ? (
-                        <div 
-                          className="prose prose-sm max-w-none dark:prose-invert"
-                          dangerouslySetInnerHTML={{
-                            __html: description
-                              .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-4 mb-2">$1</h2>')
-                              .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>')
-                              .replace(/\*(.+?)\*/g, '<em class="italic">$1</em>')
-                              .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">$1</code>')
-                              .replace(/^- (.+)$/gm, '<li class="mr-6">$1</li>')
-                              .replace(/^(\d+)\. (.+)$/gm, '<li class="mr-6 list-decimal">$2</li>')
-                              .replace(/(<li.*<\/li>)/s, '<ul class="space-y-1">$1</ul>')
-                              .replace(/```\n([\s\S]*?)\n```/g, '<pre class="bg-muted p-4 rounded-lg overflow-x-auto"><code class="font-mono text-sm">$1</code></pre>')
-                              .replace(/\n\n/g, '<br/><br/>')
-                              .replace(/\n/g, '<br/>')
-                          }}
-                        />
+                      <div className="flex-1 overflow-y-auto p-6">
+                        {description ? (
+                          <div 
+                            className="prose prose-sm max-w-none dark:prose-invert"
+                            dangerouslySetInnerHTML={{
+                              __html: sanitizeString(description)
+                                .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-4 mb-2">$1</h2>')
+                                .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>')
+                                .replace(/\*(.+?)\*/g, '<em class="italic">$1</em>')
+                                .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">$1</code>')
+                                .replace(/^- (.+)$/gm, '<li class="mr-6">$1</li>')
+                                .replace(/^(\d+)\. (.+)$/gm, '<li class="mr-6 list-decimal">$2</li>')
+                                .replace(/(<li[\s\S]*<\/li>)/g, '<ul class="space-y-1">$1</ul>')
+                                .replace(/```\n([\s\S]*?)\n```/g, '<pre class="bg-muted p-4 rounded-lg overflow-x-auto"><code class="font-mono text-sm">$1</code></pre>')
+                                .replace(/\n\n/g, '<br/><br/>')
+                                .replace(/\n/g, '<br/>')
+                            }}
+                          />
                       ) : (
                         <p className="text-muted-foreground text-sm">התצוגה המקדימה תופיע כאן...</p>
                       )}

@@ -85,27 +85,29 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" dir="rtl">
-                  <DropdownMenuItem onClick={onEdit} className="gap-2">
-                    <Edit className="w-4 h-4" />
-                    עריכה
-                  </DropdownMenuItem>
-                  {task.column === "done" && (
-                    <DropdownMenuItem
-                      onClick={() => archiveTask(task.id, "completed")}
-                      className="gap-2 text-emerald-600 focus:text-emerald-600"
-                    >
-                      <Archive className="w-4 h-4" />
-                      העבר לארכיון
+                <DropdownMenuContent align="end">
+                  <div dir="rtl">
+                    <DropdownMenuItem onClick={onEdit} className="gap-2">
+                      <Edit className="w-4 h-4" />
+                      עריכה
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => deleteTask(task.id)}
-                    className="gap-2 text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    מחיקה
-                  </DropdownMenuItem>
+                    {task.column === "done" && (
+                      <DropdownMenuItem
+                        onClick={() => archiveTask(task.id, "completed")}
+                        className="gap-2 text-emerald-600 focus:text-emerald-600"
+                      >
+                        <Archive className="w-4 h-4" />
+                        העבר לארכיון
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => deleteTask(task.id)}
+                      className="gap-2 text-destructive focus:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      מחיקה
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

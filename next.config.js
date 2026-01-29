@@ -2,9 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   
-  // Production optimizations
-  swcMinify: true,
-  
   // Security headers (backup - also in middleware.ts and vercel.json)
   async headers() {
     return [

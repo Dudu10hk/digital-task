@@ -1,7 +1,7 @@
 // Task management types
 
 export type BoardColumn = "todo" | "in-progress" | "done"
-export type TaskStatus = "todo" | "in-progress" | "done" | "on-hold" | "qa" | "canceled"
+export type TaskStatus = "todo" | "in-progress" | "review" | "blocked" | "done" | "on-hold" | "qa" | "canceled"
 export type TaskPriority = "high" | "medium" | "low"
 export type NotificationType = "mention" | "assignment" | "comment" | "handler"
 

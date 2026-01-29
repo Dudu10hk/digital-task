@@ -5,7 +5,7 @@ import { useTaskContext } from "@/lib/task-context"
 import { TaskDetailSheet } from "@/components/task-detail-sheet"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import type { Task } from "@/lib/types"
+import type { Task, TaskStatus } from "@/lib/types"
 import { ChevronRight, ChevronLeft } from "lucide-react"
 import {
   format,
@@ -38,10 +38,15 @@ export function CalendarView({ filteredTasks }: { filteredTasks: Task[] }) {
 
   const weekDays = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
 
-  const statusColors = {
+  const statusColors: Partial<Record<TaskStatus, string>> = {
     todo: "bg-status-todo text-white",
     "in-progress": "bg-status-progress text-foreground",
+    review: "bg-purple-500 text-white",
     done: "bg-status-done text-white",
+    blocked: "bg-red-500 text-white",
+    "on-hold": "bg-gray-500 text-white",
+    canceled: "bg-gray-400 text-white",
+    qa: "bg-indigo-500 text-white",
   }
 
   return (

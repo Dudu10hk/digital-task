@@ -143,8 +143,8 @@ export function Dashboard() {
                   <span className="hidden sm:inline font-medium">{currentUser?.name}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48" dir="rtl">
-                <div className="px-3 py-2">
+              <DropdownMenuContent align="end" className="w-48">
+                <div className="px-3 py-2" dir="rtl">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-sm">{currentUser?.name}</p>
                     {isAdmin() && <Crown className="w-3.5 h-3.5 text-amber-500" />}
