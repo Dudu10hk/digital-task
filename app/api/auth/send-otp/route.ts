@@ -1,43 +1,58 @@
 import { Resend } from 'resend'
 import { supabase } from '@/lib/supabase'
 import { otpEmailTemplate } from '@/lib/email-templates'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { otpRateLimiter, RATE_LIMITS, getIdentifier, applyRateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { emailSchema, sanitizeString } from '@/lib/validation'
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json()
+    const body = await request.json()
+    const { email } = body
 
-    if (!email) {
+    // 1. Validation
+    const emailValidation = emailSchema.safeParse(email)
+    if (!emailValidation.success) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        { error: 'אימייל לא תקין' },
         { status: 400 }
       )
     }
 
-    // בדיקה שהמשתמש קיים ב-DB
+    const sanitizedEmail = sanitizeString(emailValidation.data)
+
+    // 2. Rate Limiting
+    const identifier = getIdentifier(request, sanitizedEmail)
+    const rateLimit = applyRateLimit(identifier, otpRateLimiter, RATE_LIMITS.OTP)
+    
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.resetAt)
+    }
+
+    // 3. בדיקה שהמשתמש קיים ב-DB
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('email', email)
+      .eq('email', sanitizedEmail)
       .single()
 
     if (userError || !user) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'משתמש לא נמצא במערכת' },
         { status: 404 }
       )
     }
 
-    // יצירת קוד 6 ספרות
+    // 4. יצירת קוד 6 ספרות
     const code = Math.floor(100000 + Math.random() * 900000).toString()
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 דקות
 
-    // שמירה ב-DB
+    // 5. שמירה ב-DB
     const { error: otpError } = await supabase
       .from('otp_codes')
       .insert({
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        email,
+        email: sanitizedEmail,
         code,
         expires_at: expiresAt.toISOString(),
         used: false
@@ -46,25 +61,23 @@ export async function POST(request: Request) {
     if (otpError) {
       console.error('Error saving OTP:', otpError)
       return NextResponse.json(
-        { error: 'Failed to generate OTP' },
+        { error: 'כשל ביצירת קוד אימות' },
         { status: 500 }
       )
     }
 
-    // שליחת מייל (רק ניסיון - אם נכשל, לא נפסיק את התהליך)
+    // 6. שליחת מייל
     let emailSent = false
     try {
       const apiKey = process.env.RESEND_API_KEY
       
       if (apiKey) {
         const resend = new Resend(apiKey)
-        
-        // בדיקה אם Resend במצב sandbox או production
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
         
         const result = await resend.emails.send({
           from: `TaskFlow <${fromEmail}>`,
-          to: email,
+          to: sanitizedEmail,
           subject: 'קוד האימות שלך - TaskFlow',
           html: otpEmailTemplate(user.name, code)
         })
@@ -73,20 +86,21 @@ export async function POST(request: Request) {
         emailSent = true
       }
     } catch (emailError: any) {
-      console.error('Email sending failed (continuing anyway):', emailError.message)
+      console.error('Email sending failed:', emailError.message)
     }
 
-    // החזרת תגובה - ללא חשיפת הקוד!
+    // 7. החזרת תגובה עם rate limit headers
     return NextResponse.json({
       success: true,
-      message: emailSent ? 'OTP sent successfully' : 'OTP generated',
-      // אף פעם לא מחזירים את הקוד! (בעיית אבטחה)
+      message: emailSent ? 'קוד האימות נשלח למייל' : 'קוד אימות נוצר',
+    }, {
+      headers: rateLimit.headers
     })
 
   } catch (error) {
     console.error('Send OTP error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'שגיאה פנימית בשרת' },
       { status: 500 }
     )
   }

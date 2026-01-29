@@ -19,74 +19,61 @@
 - pnpm (או npm/yarn)
 - חשבון Supabase (חינמי)
 
-## הוראות התקנה
+## 🚀 התקנה מהירה
 
-### 1. התקנת התלויות
+### אפשרות 1: התקנה אוטומטית (מומלץ)
 
 ```bash
-pnpm install
-```
-
-או עם npm:
-```bash
+# 1. התקנת תלויות
 npm install
+
+# 2. הגדרת משתני סביבה
+cp env.example .env.local
+# ערוך את .env.local עם פרטי Supabase שלך
+
+# 3. הרצת הפרויקט
+npm run dev
 ```
 
-### 2. הגדרת Supabase
+### אפשרות 2: מדריך מפורט צעד-אחר-צעד
 
-#### א. יצירת פרויקט Supabase
+📖 **למדריך התקנה מלא ומפורט**, ראה: **[INSTALL.md](./INSTALL.md)**
 
-1. היכנס ל-[Supabase Dashboard](https://supabase.com/dashboard)
-2. צור פרויקט חדש
-3. שמור את ה-URL וה-Anon Key
+המדריך כולל:
+- ✅ הוראות מפורטות לכל שלב
+- ✅ הגדרת Supabase מאפס
+- ✅ הרצת כל סקריפטי SQL
+- ✅ יצירת משתמש Admin
+- ✅ פתרון בעיות נפוצות
+- ✅ פריסה לייצור
 
-#### ב. הרצת סקריפטי SQL
+⏱️ **זמן התקנה:** 15-30 דקות
 
-בתוך Supabase SQL Editor, הרץ את הקבצים הבאים לפי הסדר:
+---
 
-1. `scripts/001_create_tables.sql` - יוצר את הטבלאות הבסיסיות
-2. `scripts/002_create_task_tables.sql` - יוצר טבלאות משימות ומדיניות אבטחה
-3. `scripts/003_seed_demo_data.sql` - (אופציונלי) נתוני דמו להתחלה
+## 📚 מדריכים נוספים
 
-#### ג. הגדרת משתני סביבה
+### 🌟 התחלה
+- 📄 **[START_HERE.txt](./START_HERE.txt)** - נקודת כניסה - התחל כאן!
+- 📖 **[INSTALL.md](./INSTALL.md)** - מדריך התקנה מלא ומפורט ⭐
+- 🚀 **[QUICKSTART.md](./QUICKSTART.md)** - התחלה מהירה ב-5 דקות
+- ✅ **[CHECKLIST.md](./CHECKLIST.md)** - רשימת בדיקה להתקנה
+- 📚 **[INDEX.md](./INDEX.md)** - מדריך ניווט לכל המסמכים
+- 📦 **[SUMMARY.md](./SUMMARY.md)** - סיכום מלא של הפרויקט
 
-1. העתק את הקובץ `env.example`:
-   ```bash
-   cp env.example .env.local
-   ```
+### 🔧 הגדרה וטכני
+- 🔧 **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** - הנחיות Supabase מפורטות
+- 🗄️ **[SUPABASE_SETUP.md](./SUPABASE_SETUP.md)** - הערות נוספות
+- 📊 **[JSONB_MIGRATION.md](./JSONB_MIGRATION.md)** - מבנה נתונים והמיגרציה
 
-2. ערוך את `.env.local` והוסף את פרטי ה-Supabase שלך:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   ```
+### 🐛 פתרון בעיות
+- 🐛 **[FIX_GUIDE.md](./FIX_GUIDE.md)** - פתרון בעיות מפורט
+- 📋 **[FIX_REPORT.md](./FIX_REPORT.md)** - דוח תיקונים
+- 🔄 **[FIXES_REPORT.md](./FIXES_REPORT.md)** - סיכום תיקונים
 
-### 3. הרצת הפרויקט
-
-```bash
-pnpm dev
-```
-
-הפרויקט יעלה על: http://localhost:3000
-
-### 4. יצירת משתמש ראשון
-
-יש שתי אפשרויות:
-
-**אפשרות א' - דרך Supabase Dashboard:**
-1. היכנס ל-Authentication בדשבורד
-2. לחץ על "Add User"
-3. הוסף אימייל וסיסמה
-4. בשדה "User Metadata" הוסף:
-   ```json
-   {
-     "name": "שם המשתמש",
-     "role": "admin"
-   }
-   ```
-
-**אפשרות ב' - דרך הקוד:**
-הפרויקט כולל דף הרשמה אוטומטי. פשוט צור משתמש חדש דרך הממשק.
+### 🚢 פריסה
+- 🚢 **[DEPLOYMENT.md](./DEPLOYMENT.md)** - פריסה לייצור
+- 📋 **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - סטטוס הפרויקט
 
 ## מבנה הפרויקט
 
