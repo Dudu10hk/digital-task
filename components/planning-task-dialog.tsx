@@ -154,10 +154,10 @@ export function PlanningTaskDialog({ open, onOpenChange }: PlanningTaskDialogPro
               <User className="w-4 h-4" />
               גורם אחראי
             </Label>
-            <Select value={assigneeId} onValueChange={setAssigneeId}>
+            <Select value={assigneeId || "unassigned"} onValueChange={(value) => setAssigneeId(value === "unassigned" ? "" : value)}>
               <SelectTrigger className="h-12 bg-muted/40 border-border/40 focus:bg-background rounded-lg">
                 <SelectValue placeholder="בחר אחראי">
-                  {assigneeId && (
+                  {assigneeId ? (
                     <div className="flex items-center gap-2">
                       <Avatar className="w-6 h-6">
                         <AvatarImage src={users.find(u => u.id === assigneeId)?.avatar || undefined} />
@@ -167,11 +167,13 @@ export function PlanningTaskDialog({ open, onOpenChange }: PlanningTaskDialogPro
                       </Avatar>
                       <span>{users.find(u => u.id === assigneeId)?.name}</span>
                     </div>
+                  ) : (
+                    <span className="text-muted-foreground">ללא אחראי</span>
                   )}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">
+                <SelectItem value="unassigned">
                   <span className="text-muted-foreground">ללא אחראי</span>
                 </SelectItem>
                 {users.map((user) => (
