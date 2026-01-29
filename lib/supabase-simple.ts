@@ -1,9 +1,15 @@
-import { supabase } from "./supabase"
+import { supabase, isSupabaseConfigured } from "./supabase"
+import { mockTasks } from "./mock-data"
 import type { Task, Notification, StickyNote, ArchivedTask } from "./types"
 
 // Simple JSONB approach - store entire objects
 
 export async function saveTasks(tasks: Task[]): Promise<boolean> {
+  if (!isSupabaseConfigured) {
+    console.warn('⚠️ Supabase not configured - running in demo mode. Data will not be saved.')
+    return true // Return success in demo mode
+  }
+  
   try {
     // Delete all existing
     await supabase.from('tasks').delete().neq('id', '')
@@ -21,6 +27,11 @@ export async function saveTasks(tasks: Task[]): Promise<boolean> {
 }
 
 export async function loadTasks(): Promise<Task[]> {
+  if (!isSupabaseConfigured) {
+    console.warn('⚠️ Supabase not configured - loading demo data')
+    return mockTasks
+  }
+  
   try {
     const { data, error } = await supabase
       .from('tasks')
@@ -61,6 +72,11 @@ export async function loadTasks(): Promise<Task[]> {
 }
 
 export async function saveNotifications(notifications: Notification[], userId: string): Promise<boolean> {
+  if (!isSupabaseConfigured) {
+    console.warn('⚠️ Supabase not configured - running in demo mode')
+    return true
+  }
+  
   try {
     // Delete user's existing notifications
     await supabase.from('notifications').delete().eq('data->>toUserId', userId)
@@ -83,6 +99,10 @@ export async function saveNotifications(notifications: Notification[], userId: s
 }
 
 export async function loadNotifications(userId: string): Promise<Notification[]> {
+  if (!isSupabaseConfigured) {
+    return [] // Empty notifications in demo mode
+  }
+  
   try {
     const { data, error } = await supabase
       .from('notifications')
@@ -107,6 +127,11 @@ export async function loadNotifications(userId: string): Promise<Notification[]>
 }
 
 export async function saveStickyNotes(notes: StickyNote[], userId: string): Promise<boolean> {
+  if (!isSupabaseConfigured) {
+    console.warn('⚠️ Supabase not configured - running in demo mode')
+    return true
+  }
+  
   try {
     // Delete user's existing notes
     await supabase.from('sticky_notes').delete().eq('data->>userId', userId)
@@ -129,6 +154,10 @@ export async function saveStickyNotes(notes: StickyNote[], userId: string): Prom
 }
 
 export async function loadStickyNotes(userId: string): Promise<StickyNote[]> {
+  if (!isSupabaseConfigured) {
+    return [] // Empty sticky notes in demo mode
+  }
+  
   try {
     const { data, error } = await supabase
       .from('sticky_notes')
@@ -154,6 +183,11 @@ export async function loadStickyNotes(userId: string): Promise<StickyNote[]> {
 }
 
 export async function saveArchivedTasks(tasks: ArchivedTask[]): Promise<boolean> {
+  if (!isSupabaseConfigured) {
+    console.warn('⚠️ Supabase not configured - running in demo mode')
+    return true
+  }
+  
   try {
     // Delete all existing
     await supabase.from('archived_tasks').delete().neq('id', '')
@@ -173,6 +207,10 @@ export async function saveArchivedTasks(tasks: ArchivedTask[]): Promise<boolean>
 }
 
 export async function loadArchivedTasks(): Promise<ArchivedTask[]> {
+  if (!isSupabaseConfigured) {
+    return [] // Empty archived tasks in demo mode
+  }
+  
   try {
     const { data, error } = await supabase
       .from('archived_tasks')
