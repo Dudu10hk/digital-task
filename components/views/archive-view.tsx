@@ -227,46 +227,39 @@ export function ArchiveView() {
                       </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-3">
-                      <ScrollArea className="max-h-48">
-                        <div className="space-y-2">
-                          {task.history.slice(0, 5).map((entry) => (
-                            <div
-                              key={entry.id}
-                              className="flex items-start gap-3 p-2 rounded-lg bg-muted/40 text-sm"
-                            >
-                              <Avatar className="w-6 h-6 shrink-0">
-                                <AvatarImage
-                                  src={getUserById(entry.userId)?.avatar || "/placeholder.svg"}
-                                />
-                                <AvatarFallback className="text-xs">
-                                  {entry.userName?.split(" ").map((n) => n[0]).join("") || "?"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-muted-foreground">
-                                  <span className="font-medium text-foreground">{entry.userName || "משתמש"}</span>
-                                  {" "}
-                                  {entry.action === "created" && "יצר/ה את המשימה"}
-                                  {entry.action === "updated" && `עדכן/ה ${entry.field || ""}`}
-                                  {entry.action === "status_changed" && "שינה/תה סטטוס"}
-                                  {entry.action === "column_changed" && "העביר/ה עמודה"}
-                                  {entry.action === "comment_added" && "הוסיף/ה הערה"}
-                                  {entry.action === "handler_changed" && "שינה/תה גורם מטפל"}
-                                  {entry.action === "station_changed" && "שינה/תה תחנה"}
-                                </p>
-                                <p className="text-xs text-muted-foreground/70">
-                                  {format(new Date(entry.timestamp), "dd/MM/yyyy HH:mm", { locale: he })}
-                                </p>
-                              </div>
+                      <div className="max-h-[300px] overflow-y-auto pr-2 space-y-2">
+                        {task.history.map((entry) => (
+                          <div
+                            key={entry.id}
+                            className="flex items-start gap-3 p-2 rounded-lg bg-muted/40 text-sm"
+                          >
+                            <Avatar className="w-6 h-6 shrink-0">
+                              <AvatarImage
+                                src={getUserById(entry.userId)?.avatar || "/placeholder.svg"}
+                              />
+                              <AvatarFallback className="text-xs">
+                                {entry.userName?.split(" ").map((n) => n[0]).join("") || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-muted-foreground">
+                                <span className="font-medium text-foreground">{entry.userName || "משתמש"}</span>
+                                {" "}
+                                {entry.action === "created" && "יצר/ה את המשימה"}
+                                {entry.action === "updated" && `עדכן/ה ${entry.field || ""}`}
+                                {entry.action === "status_changed" && "שינה/תה סטטוס"}
+                                {entry.action === "column_changed" && "העביר/ה עמודה"}
+                                {entry.action === "comment_added" && "הוסיף/ה הערה"}
+                                {entry.action === "handler_changed" && "שינה/תה גורם מטפל"}
+                                {entry.action === "station_changed" && "שינה/תה תחנה"}
+                              </p>
+                              <p className="text-xs text-muted-foreground/70">
+                                {format(new Date(entry.timestamp), "dd/MM/yyyy HH:mm", { locale: he })}
+                              </p>
                             </div>
-                          ))}
-                          {task.history.length > 5 && (
-                            <p className="text-xs text-muted-foreground text-center py-2">
-                              ועוד {task.history.length - 5} פעולות...
-                            </p>
-                          )}
-                        </div>
-                      </ScrollArea>
+                          </div>
+                        ))}
+                      </div>
                     </CollapsibleContent>
                   </Collapsible>
                 </div>
