@@ -55,38 +55,35 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     setUploading(true)
 
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("userId", currentUser?.id || "")
-
-      const response = await fetch("/api/upload/avatar", {
-        method: "POST",
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "שגיאה בהעלאת התמונה")
+      // Convert image to base64
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const base64String = reader.result as string
+        
+        // עדכן את ה-avatar של המשתמש
+        await updateUserAvatar(base64String)
+        setAvatarUrl(base64String)
+        toast.success("תמונת הפרופיל עודכנה בהצלחה!")
+        
+        // רענן את הדף כדי לראות את התמונה החדשה בכל מקום
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
+        
+        setUploading(false)
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ""
+        }
       }
-
-      // עדכן את ה-avatar של המשתמש
-      await updateUserAvatar(data.url)
-      setAvatarUrl(data.url)
-      toast.success("תמונת הפרופיל עודכנה בהצלחה!")
-      
-      // רענן את הדף כדי לראות את התמונה החדשה בכל מקום
-      setTimeout(() => {
-        window.location.reload()
-      }, 1000)
+      reader.onerror = () => {
+        toast.error("שגיאה בקריאת הקובץ")
+        setUploading(false)
+      }
+      reader.readAsDataURL(file)
     } catch (error) {
       console.error("Error uploading avatar:", error)
-      toast.error(error instanceof Error ? error.message : "שגיאה בהעלאת התמונה")
-    } finally {
+      toast.error("שגיאה בהעלאת התמונה")
       setUploading(false)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
     }
   }
 

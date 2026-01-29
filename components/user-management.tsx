@@ -80,34 +80,31 @@ export function UserManagement() {
     setUploading(true)
 
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("userId", isEdit ? editingUserId || "temp" : "temp-new-user")
-
-      const response = await fetch("/api/upload/avatar", {
-        method: "POST",
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "שגיאה בהעלאת התמונה")
+      // Convert image to base64
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setAvatarUrl(base64String)
+        toast.success("תמונה הועלתה בהצלחה!")
+        setUploading(false)
+        
+        // Clear file input
+        if (isEdit && editAvatarFileRef.current) {
+          editAvatarFileRef.current.value = ""
+        }
+        if (!isEdit && newAvatarFileRef.current) {
+          newAvatarFileRef.current.value = ""
+        }
       }
-
-      setAvatarUrl(data.url)
-      toast.success("תמונה הועלתה בהצלחה!")
+      reader.onerror = () => {
+        toast.error("שגיאה בקריאת הקובץ")
+        setUploading(false)
+      }
+      reader.readAsDataURL(file)
     } catch (error) {
       console.error("Error uploading avatar:", error)
-      toast.error(error instanceof Error ? error.message : "שגיאה בהעלאת התמונה")
-    } finally {
+      toast.error("שגיאה בהעלאת התמונה")
       setUploading(false)
-      if (isEdit && editAvatarFileRef.current) {
-        editAvatarFileRef.current.value = ""
-      }
-      if (!isEdit && newAvatarFileRef.current) {
-        newAvatarFileRef.current.value = ""
-      }
     }
   }
 
