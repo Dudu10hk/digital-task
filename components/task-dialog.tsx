@@ -424,6 +424,40 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
             </DialogContent>
           </Dialog>
 
+          {/* Figma Link */}
+          <div className="space-y-2.5">
+            <Label htmlFor="figmaLink" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <Link2 className="w-4 h-4" />
+              קישור Figma
+            </Label>
+            <Input
+              id="figmaLink"
+              type="url"
+              value={figmaLink}
+              onChange={(e) => setFigmaLink(e.target.value)}
+              placeholder="https://www.figma.com/..."
+              dir="ltr"
+              className="h-12 bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
+            />
+          </div>
+
+          {/* Process Spec Link */}
+          <div className="space-y-2.5">
+            <Label htmlFor="processSpecLink" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              קישור לאפיון תהליך
+            </Label>
+            <Input
+              id="processSpecLink"
+              type="url"
+              value={processSpecLink}
+              onChange={(e) => setProcessSpecLink(e.target.value)}
+              placeholder="https://..."
+              dir="ltr"
+              className="h-12 bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
+            />
+          </div>
+
           {/* Column & Status */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2.5">
@@ -644,40 +678,6 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Figma Link */}
-          <div className="space-y-2.5">
-            <Label htmlFor="figmaLink" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
-              <Link2 className="w-4 h-4" />
-              קישור Figma
-            </Label>
-            <Input
-              id="figmaLink"
-              type="url"
-              value={figmaLink}
-              onChange={(e) => setFigmaLink(e.target.value)}
-              placeholder="https://www.figma.com/..."
-              dir="ltr"
-              className="h-12 bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
-            />
-          </div>
-
-          {/* Process Spec Link */}
-          <div className="space-y-2.5">
-            <Label htmlFor="processSpecLink" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              קישור לאפיון תהליך
-            </Label>
-            <Input
-              id="processSpecLink"
-              type="url"
-              value={processSpecLink}
-              onChange={(e) => setProcessSpecLink(e.target.value)}
-              placeholder="https://..."
-              dir="ltr"
-              className="h-12 bg-muted/40 border border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
-            />
           </div>
 
           {/* Actions */}

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTaskContext } from "@/lib/task-context"
 import type { TaskPriority } from "@/lib/types"
-import { ClipboardList, User, Users as UsersIcon, AlertCircle } from "lucide-react"
+import { ClipboardList, User, Users as UsersIcon, AlertCircle, Link2, FileText } from "lucide-react"
 
 interface PlanningTaskDialogProps {
   open: boolean
@@ -26,6 +26,8 @@ export function PlanningTaskDialog({ open, onOpenChange }: PlanningTaskDialogPro
   const [priority, setPriority] = useState<TaskPriority>("medium")
   const [assigneeId, setAssigneeId] = useState<string>("")
   const [businessUnit, setBusinessUnit] = useState("")
+  const [figmaLink, setFigmaLink] = useState("")
+  const [processSpecLink, setProcessSpecLink] = useState("")
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,8 +51,8 @@ export function PlanningTaskDialog({ open, onOpenChange }: PlanningTaskDialogPro
       handlerName: null,
       handlerAvatar: null,
       taggedUserIds: [],
-      figmaLink: undefined,
-      processSpecLink: undefined,
+      figmaLink: figmaLink || undefined,
+      processSpecLink: processSpecLink || undefined,
       createdBy: currentUser?.id || "",
       files: [],
       isPlanning: true,
@@ -65,6 +67,8 @@ export function PlanningTaskDialog({ open, onOpenChange }: PlanningTaskDialogPro
     setPriority("medium")
     setAssigneeId("")
     setBusinessUnit("")
+    setFigmaLink("")
+    setProcessSpecLink("")
     onOpenChange(false)
   }
 
@@ -117,6 +121,40 @@ export function PlanningTaskDialog({ open, onOpenChange }: PlanningTaskDialogPro
               placeholder="פרטים נוספים על המשימה..."
               rows={4}
               className="resize-none bg-muted/40 border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
+            />
+          </div>
+
+          {/* Figma Link */}
+          <div className="space-y-2.5">
+            <Label htmlFor="figmaLink" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <Link2 className="w-4 h-4" />
+              קישור Figma
+            </Label>
+            <Input
+              id="figmaLink"
+              type="url"
+              value={figmaLink}
+              onChange={(e) => setFigmaLink(e.target.value)}
+              placeholder="https://www.figma.com/..."
+              dir="ltr"
+              className="h-12 bg-muted/40 border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
+            />
+          </div>
+
+          {/* Process Spec Link */}
+          <div className="space-y-2.5">
+            <Label htmlFor="processSpecLink" className="text-sm font-semibold text-foreground/90 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              קישור לאפיון תהליך
+            </Label>
+            <Input
+              id="processSpecLink"
+              type="url"
+              value={processSpecLink}
+              onChange={(e) => setProcessSpecLink(e.target.value)}
+              placeholder="https://..."
+              dir="ltr"
+              className="h-12 bg-muted/40 border-border/40 focus:bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 rounded-lg"
             />
           </div>
 
