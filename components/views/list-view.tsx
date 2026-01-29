@@ -225,8 +225,8 @@ export function ListView({ filteredTasks }: { filteredTasks: Task[] }) {
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <Badge className={`${statusConfig[task.status].bgClass} text-xs font-medium`}>
-                        {statusConfig[task.status].label}
+                      <Badge className={`${statusConfig[task.status]?.bgClass || "bg-gray-500"} text-xs font-medium`}>
+                        {statusConfig[task.status]?.label || task.status}
                       </Badge>
                     </td>
                     <td className="px-5 py-4">

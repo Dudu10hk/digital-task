@@ -30,6 +30,12 @@ import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import { statusConfig } from "@/lib/status-config"
 
+const priorityConfig = {
+  high: { label: "גבוהה", color: "bg-red-500 text-white border-red-600" },
+  medium: { label: "בינונית", color: "bg-amber-500 text-white border-amber-600" },
+  low: { label: "נמוכה", color: "bg-blue-500 text-white border-blue-600" },
+}
+
 export function ArchiveView() {
   const { archivedTasks, currentUser, restoreTask, getUserById } = useTaskContext()
   const [filter, setFilter] = useState<"all" | "completed" | "deleted">("all")
@@ -139,8 +145,8 @@ export function ArchiveView() {
                             </>
                           )}
                         </Badge>
-                        <Badge variant="outline" className={statusConfig[task.priority].color}>
-                          {statusConfig[task.priority].label}
+                        <Badge variant="outline" className={priorityConfig[task.priority]?.color || ""}>
+                          {priorityConfig[task.priority]?.label || task.priority}
                         </Badge>
                       </div>
                       {task.description && (

@@ -118,11 +118,11 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
 
           {/* Status & Priority Badges */}
           <div className="flex flex-wrap gap-2 mb-4">
-            <Badge className={`${statusConfig[task.status].bgClass} text-xs font-medium`}>
-              {statusConfig[task.status].label}
+            <Badge className={`${statusConfig[task.status]?.bgClass || "bg-gray-500"} text-xs font-medium`}>
+              {statusConfig[task.status]?.label || task.status}
             </Badge>
-            <Badge className={`${priorityStyles[task.priority]} text-xs font-medium`}>
-              {priorityLabels[task.priority]}
+            <Badge className={`${priorityStyles[task.priority] || priorityStyles.medium} text-xs font-medium`}>
+              {priorityLabels[task.priority] || task.priority}
             </Badge>
             {/* In Progress Station Badge */}
             {task.column === "in-progress" && task.inProgressStation && (
