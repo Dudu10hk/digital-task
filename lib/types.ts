@@ -94,6 +94,8 @@ export interface Task {
   createdBy: string
   updatedAt: Date
   order: number
+  isPlanning?: boolean
+  planningReceivedAt?: Date
 }
 
 export interface StickyNote {

@@ -37,6 +37,9 @@ export async function loadTasks(): Promise<Task[]> {
         dueDate: task.dueDate ? new Date(task.dueDate) : null,
         createdAt: new Date(task.createdAt),
         updatedAt: new Date(task.updatedAt),
+        planningReceivedAt: task.planningReceivedAt 
+          ? new Date(task.planningReceivedAt) 
+          : (task.isPlanning ? new Date(task.createdAt) : undefined),
         comments: task.comments.map(c => ({
           ...c,
           createdAt: new Date(c.createdAt)

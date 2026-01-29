@@ -15,17 +15,18 @@ import { ListView } from "@/components/views/list-view"
 import { BoardView } from "@/components/views/board-view"
 import { CalendarView } from "@/components/views/calendar-view"
 import { ArchiveView } from "@/components/views/archive-view"
+import { PlanningView } from "@/components/views/planning-view"
 import { TaskDialog } from "@/components/task-dialog"
 import { NotificationsPanel } from "@/components/notifications-panel"
 import { UserManagement } from "@/components/user-management"
 import { StickyNotesSidebar } from "@/components/sticky-notes-sidebar"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { ProfileDialog } from "@/components/profile-dialog"
-import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Crown, Archive, BarChart3, Settings } from "lucide-react"
+import { LayoutGrid, LogOut, Plus, List, Columns3, Calendar, User, Crown, Archive, BarChart3, Settings, ClipboardList } from "lucide-react"
 import { AdvancedFilters, applyFilters, type FilterOptions } from "@/components/advanced-filters"
 import { StatisticsDashboard } from "@/components/statistics-dashboard"
 
-type ViewType = "list" | "board" | "calendar" | "archive" | "statistics"
+type ViewType = "list" | "board" | "calendar" | "archive" | "statistics" | "planning"
 
 export function Dashboard() {
   const { currentUser, logout, tasks, isAdmin, isViewer, loading } = useTaskContext()
@@ -74,6 +75,11 @@ export function Dashboard() {
     { id: "statistics" as ViewType, label: "סטטיסטיקות", icon: BarChart3 },
     { id: "archive" as ViewType, label: "ארכיון", icon: Archive },
   ]
+
+  // Add planning view only for admins
+  if (isAdmin()) {
+    views.push({ id: "planning" as ViewType, label: "תכנון", icon: ClipboardList })
+  }
 
   if (loading) {
     return <LoadingSpinner fullScreen text="טוען נתונים..." />
@@ -182,6 +188,7 @@ export function Dashboard() {
         {currentView === "calendar" && <CalendarView filteredTasks={filteredTasks} />}
         {currentView === "statistics" && <StatisticsDashboard />}
         {currentView === "archive" && <ArchiveView />}
+        {currentView === "planning" && <PlanningView filteredTasks={filteredTasks} />}
       </main>
 
       {/* Create Task Dialog */}
