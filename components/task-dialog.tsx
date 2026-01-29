@@ -149,19 +149,29 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
     }
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = e.target.files
     if (!uploadedFiles) return
 
-    const newFiles: TaskFile[] = Array.from(uploadedFiles).map((file) => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: getFileType(file.name),
-      url: URL.createObjectURL(file),
-      uploadedAt: new Date(),
-      uploadedBy: currentUser?.id || "",
-    }))
+    // Convert files to base64
+    const filePromises = Array.from(uploadedFiles).map(async (file) => {
+      return new Promise<TaskFile>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          resolve({
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name: file.name,
+            type: getFileType(file.name),
+            url: reader.result as string, // Base64 data URL
+            uploadedAt: new Date(),
+            uploadedBy: currentUser?.id || "",
+          })
+        }
+        reader.readAsDataURL(file)
+      })
+    })
 
+    const newFiles = await Promise.all(filePromises)
     setFiles((prev) => [...prev, ...newFiles])
     e.target.value = ""
   }

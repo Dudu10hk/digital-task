@@ -125,18 +125,29 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
     return "other"
   }
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = e.target.files
     if (!uploadedFiles || !currentUser) return
 
-    const newFiles = Array.from(uploadedFiles).map((file) => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: getFileType(file.name),
-      url: URL.createObjectURL(file),
-      uploadedAt: new Date(),
-      uploadedBy: currentUser.id,
-    }))
+    // Convert files to base64
+    const filePromises = Array.from(uploadedFiles).map(async (file) => {
+      return new Promise<{ id: string; name: string; type: "pdf" | "excel" | "word" | "other"; url: string; uploadedAt: Date; uploadedBy: string }>((resolve) => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          resolve({
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name: file.name,
+            type: getFileType(file.name),
+            url: reader.result as string, // Base64 data URL
+            uploadedAt: new Date(),
+            uploadedBy: currentUser.id,
+          })
+        }
+        reader.readAsDataURL(file)
+      })
+    })
+
+    const newFiles = await Promise.all(filePromises)
 
     // Add files to task
     updateTask(task.id, { 
@@ -618,21 +629,33 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                           size="icon"
                           className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
                           onClick={() => {
-                            // Open file in new tab or download
-                            if (file.url.startsWith('blob:')) {
-                              // For blob URLs, trigger download
-                              const a = document.createElement('a')
-                              a.href = file.url
-                              a.download = file.name
-                              document.body.appendChild(a)
-                              a.click()
-                              document.body.removeChild(a)
+                            // For base64 data URLs, open in new tab
+                            if (file.url.startsWith('data:')) {
+                              // Open base64 file in new tab
+                              const newWindow = window.open()
+                              if (newWindow) {
+                                newWindow.document.write(`
+                                  <html dir="rtl">
+                                    <head>
+                                      <title>${file.name}</title>
+                                      <style>
+                                        body { margin: 0; padding: 20px; font-family: Arial; }
+                                        embed, iframe { width: 100%; height: calc(100vh - 40px); border: none; }
+                                      </style>
+                                    </head>
+                                    <body>
+                                      <h3>${file.name}</h3>
+                                      <embed src="${file.url}" type="${file.url.split(';')[0].split(':')[1]}" />
+                                    </body>
+                                  </html>
+                                `)
+                              }
                             } else {
                               // For regular URLs, open in new tab
                               window.open(file.url, '_blank')
                             }
                           }}
-                          title="צפה/הורד"
+                          title="צפה"
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
