@@ -49,6 +49,17 @@ import {
   Search,
   Users as UsersIcon,
   Layers,
+  Download,
+  Paperclip,
+  X,
+  FileSpreadsheet,
+  File as FileIcon,
+  Maximize2,
+  Bold,
+  Italic,
+  List as ListIcon,
+  ListOrdered,
+  Heading2,
 } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
@@ -64,6 +75,7 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
   const [newComment, setNewComment] = useState("")
   const [taggedUserIds, setTaggedUserIds] = useState<string[]>([])
   const [showFigmaPreview, setShowFigmaPreview] = useState(false)
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
   const canEdit = canEditTask(task)
 
   const statusOptions = Object.entries(statusConfig).map(([value, config]) => ({
@@ -160,6 +172,25 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
 
   const handleStatusChange = (status: TaskStatus) => {
     updateTask(task.id, { status })
+  }
+
+  const insertMarkdown = (before: string, after: string = "") => {
+    const textarea = document.getElementById("expanded-description-detail") as HTMLTextAreaElement
+    if (!textarea) return
+
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selectedText = task.description.substring(start, end)
+    const newText = task.description.substring(0, start) + before + selectedText + after + task.description.substring(end)
+    
+    updateTask(task.id, { description: newText })
+    
+    // Set cursor position after insert
+    setTimeout(() => {
+      textarea.focus()
+      const newCursorPos = start + before.length + selectedText.length
+      textarea.setSelectionRange(newCursorPos, newCursorPos)
+    }, 0)
   }
 
   const handleColumnChange = (column: BoardColumn) => {
@@ -453,7 +484,21 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
 
             {/* Description */}
             <div className="space-y-2.5">
-              <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">תיאור</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">תיאור</Label>
+                {canEdit && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsDescriptionExpanded(true)}
+                    className="h-7 text-xs gap-1.5 text-muted-foreground hover:text-primary"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    הרחב עורך
+                  </Button>
+                )}
+              </div>
               <Textarea
                 value={task.description}
                 onChange={(e) => updateTask(task.id, { description: e.target.value })}
@@ -463,6 +508,178 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                 disabled={!canEdit}
               />
             </div>
+
+            {/* Expanded Description Editor Dialog */}
+            <Dialog open={isDescriptionExpanded} onOpenChange={setIsDescriptionExpanded}>
+              <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden p-0" dir="rtl">
+                <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-b from-primary/5 to-transparent">
+                  <DialogTitle className="text-2xl font-bold bg-gradient-to-l from-primary to-primary/60 bg-clip-text text-transparent">
+                    עורך תיאור מתקדם
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="flex flex-col h-[calc(85vh-140px)]">
+                  {/* Markdown Toolbar */}
+                  <div className="px-6 py-3 border-b bg-muted/30">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertMarkdown("## ", "")}
+                        className="h-9 w-9 p-0"
+                        title="כותרת"
+                      >
+                        <Heading2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertMarkdown("**", "**")}
+                        className="h-9 w-9 p-0 font-bold"
+                        title="מודגש"
+                      >
+                        <Bold className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertMarkdown("*", "*")}
+                        className="h-9 w-9 p-0 italic"
+                        title="נטוי"
+                      >
+                        <Italic className="w-4 h-4" />
+                      </Button>
+                      <div className="w-px h-6 bg-border mx-1" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertMarkdown("- ", "")}
+                        className="h-9 w-9 p-0"
+                        title="רשימה"
+                      >
+                        <ListIcon className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertMarkdown("1. ", "")}
+                        className="h-9 w-9 p-0"
+                        title="רשימה ממוספרת"
+                      >
+                        <ListOrdered className="w-4 h-4" />
+                      </Button>
+                      <div className="w-px h-6 bg-border mx-1" />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertMarkdown("`", "`")}
+                        className="h-9 px-3 text-xs font-mono"
+                        title="קוד"
+                      >
+                        {"</>"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => insertMarkdown("```\n", "\n```")}
+                        className="h-9 px-3 text-xs"
+                        title="בלוק קוד"
+                      >
+                        Code Block
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Split View: Editor & Preview */}
+                  <div className="flex-1 grid grid-cols-2 gap-0 min-h-0">
+                    {/* Editor */}
+                    <div className="flex flex-col border-l">
+                      <div className="px-4 py-2 bg-muted/20 border-b">
+                        <span className="text-xs font-semibold text-muted-foreground">עריכה</span>
+                      </div>
+                      <Textarea
+                        id="expanded-description-detail"
+                        value={task.description}
+                        onChange={(e) => updateTask(task.id, { description: e.target.value })}
+                        placeholder="כתוב את התיאור המפורט כאן...
+                        
+תמיכה ב-Markdown:
+## כותרת
+**טקסט מודגש**
+*טקסט נטוי*
+- פריט ברשימה
+1. פריט ממוספר
+`קוד`
+```
+בלוק קוד
+```"
+                        className="flex-1 resize-none rounded-none border-0 focus:ring-0 focus-visible:ring-0 p-6 font-mono text-sm leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Preview */}
+                    <div className="flex flex-col overflow-hidden">
+                      <div className="px-4 py-2 bg-muted/20 border-b">
+                        <span className="text-xs font-semibold text-muted-foreground">תצוגה מקדימה</span>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-6">
+                        {task.description ? (
+                          <div 
+                            className="prose prose-sm max-w-none dark:prose-invert"
+                            dangerouslySetInnerHTML={{
+                              __html: task.description
+                                .replace(/^## (.+)$/gm, '<h2 class="text-xl font-bold mt-4 mb-2">$1</h2>')
+                                .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>')
+                                .replace(/\*(.+?)\*/g, '<em class="italic">$1</em>')
+                                .replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-muted rounded text-sm font-mono">$1</code>')
+                                .replace(/^- (.+)$/gm, '<li class="mr-6">$1</li>')
+                                .replace(/^(\d+)\. (.+)$/gm, '<li class="mr-6 list-decimal">$2</li>')
+                                .replace(/(<li.*<\/li>)/s, '<ul class="space-y-1">$1</ul>')
+                                .replace(/```\n([\s\S]*?)\n```/g, '<pre class="bg-muted p-4 rounded-lg overflow-x-auto"><code class="font-mono text-sm">$1</code></pre>')
+                                .replace(/\n\n/g, '<br/><br/>')
+                                .replace(/\n/g, '<br/>')
+                            }}
+                          />
+                        ) : (
+                          <p className="text-muted-foreground text-sm">התצוגה המקדימה תופיע כאן...</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="px-6 py-4 border-t bg-muted/10 flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
+                      {task.description.length} תווים
+                    </div>
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsDescriptionExpanded(false)}
+                        className="h-10 px-6"
+                      >
+                        סגור
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => setIsDescriptionExpanded(false)}
+                        className="h-10 px-6"
+                      >
+                        ✓ סיימתי
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Figma Link */}
             {task.figmaLink && (
