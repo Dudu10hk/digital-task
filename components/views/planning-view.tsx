@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Task } from "@/lib/types"
-import { Search, Calendar, User, X, ClipboardList, Clock, Plus } from "lucide-react"
+import { Search, Calendar, User, X, ClipboardList, Clock, Plus, ChevronUp, ChevronDown } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
 import { he } from "date-fns/locale"
 
@@ -97,6 +97,48 @@ export function PlanningView({ filteredTasks }: { filteredTasks: Task[] }) {
     updateTask(taskId, {
       isPlanning: false,
       planningReceivedAt: undefined,
+    })
+  }
+
+  const movePriorityUp = (taskId: string) => {
+    if (isViewer()) return
+    
+    const currentIndex = filteredAndSortedTasks.findIndex(t => t.id === taskId)
+    if (currentIndex <= 0) return // Already at top
+    
+    const currentTask = filteredAndSortedTasks[currentIndex]
+    const taskAbove = filteredAndSortedTasks[currentIndex - 1]
+    
+    if (!canEditTask(currentTask)) return
+
+    // Swap planningReceivedAt to change order
+    const tempDate = currentTask.planningReceivedAt || currentTask.createdAt
+    updateTask(currentTask.id, {
+      planningReceivedAt: taskAbove.planningReceivedAt || taskAbove.createdAt
+    })
+    updateTask(taskAbove.id, {
+      planningReceivedAt: tempDate
+    })
+  }
+
+  const movePriorityDown = (taskId: string) => {
+    if (isViewer()) return
+    
+    const currentIndex = filteredAndSortedTasks.findIndex(t => t.id === taskId)
+    if (currentIndex === -1 || currentIndex >= filteredAndSortedTasks.length - 1) return // Already at bottom
+    
+    const currentTask = filteredAndSortedTasks[currentIndex]
+    const taskBelow = filteredAndSortedTasks[currentIndex + 1]
+    
+    if (!canEditTask(currentTask)) return
+
+    // Swap planningReceivedAt to change order
+    const tempDate = currentTask.planningReceivedAt || currentTask.createdAt
+    updateTask(currentTask.id, {
+      planningReceivedAt: taskBelow.planningReceivedAt || taskBelow.createdAt
+    })
+    updateTask(taskBelow.id, {
+      planningReceivedAt: tempDate
     })
   }
 
@@ -292,6 +334,32 @@ export function PlanningView({ filteredTasks }: { filteredTasks: Task[] }) {
                       {/* Actions */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
+                          {/* Priority arrows */}
+                          {canEdit && (
+                            <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => movePriorityUp(task.id)}
+                                className="h-6 w-6 hover:bg-primary/10 hover:text-primary"
+                                disabled={filteredAndSortedTasks.findIndex(t => t.id === task.id) === 0}
+                                title="העלה עדיפות"
+                              >
+                                <ChevronUp className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => movePriorityDown(task.id)}
+                                className="h-6 w-6 hover:bg-primary/10 hover:text-primary"
+                                disabled={filteredAndSortedTasks.findIndex(t => t.id === task.id) === filteredAndSortedTasks.length - 1}
+                                title="הורד עדיפות"
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          )}
+                          
                           <Button
                             variant="ghost"
                             size="sm"
