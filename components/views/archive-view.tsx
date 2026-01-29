@@ -25,7 +25,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Archive, Search, Undo2, CheckCircle2, Trash2, Calendar, User, Clock, History } from "lucide-react"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import { Archive, Search, Undo2, CheckCircle2, Trash2, Calendar, User, Clock, History, ChevronDown } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import { statusConfig } from "@/lib/status-config"
@@ -210,55 +215,60 @@ export function ArchiveView() {
                   </div>
 
                   {/* History */}
-                  <div className="border-t pt-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <History className="w-4 h-4 text-primary" />
-                      <span className="font-semibold text-sm">היסטוריה</span>
-                      <Badge variant="outline" className="text-xs">
-                        {task.history.length} פעולות
-                      </Badge>
-                    </div>
-                    <ScrollArea className="max-h-48">
-                      <div className="space-y-2">
-                        {task.history.slice(0, 5).map((entry) => (
-                          <div
-                            key={entry.id}
-                            className="flex items-start gap-3 p-2 rounded-lg bg-muted/40 text-sm"
-                          >
-                            <Avatar className="w-6 h-6 shrink-0">
-                              <AvatarImage
-                                src={getUserById(entry.userId)?.avatar || "/placeholder.svg"}
-                              />
-                              <AvatarFallback className="text-xs">
-                                {entry.userName?.split(" ").map((n) => n[0]).join("") || "?"}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-muted-foreground">
-                                <span className="font-medium text-foreground">{entry.userName || "משתמש"}</span>
-                                {" "}
-                                {entry.action === "created" && "יצר/ה את המשימה"}
-                                {entry.action === "updated" && `עדכן/ה ${entry.field || ""}`}
-                                {entry.action === "status_changed" && "שינה/תה סטטוס"}
-                                {entry.action === "column_changed" && "העביר/ה עמודה"}
-                                {entry.action === "comment_added" && "הוסיף/ה הערה"}
-                                {entry.action === "handler_changed" && "שינה/תה גורם מטפל"}
-                                {entry.action === "station_changed" && "שינה/תה תחנה"}
-                              </p>
-                              <p className="text-xs text-muted-foreground/70">
-                                {format(new Date(entry.timestamp), "dd/MM/yyyy HH:mm", { locale: he })}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                        {task.history.length > 5 && (
-                          <p className="text-xs text-muted-foreground text-center py-2">
-                            ועוד {task.history.length - 5} פעולות...
-                          </p>
-                        )}
+                  <Collapsible className="border-t pt-4">
+                    <CollapsibleTrigger className="w-full">
+                      <div className="flex items-center gap-2 hover:opacity-70 transition-opacity">
+                        <History className="w-4 h-4 text-primary" />
+                        <span className="font-semibold text-sm">היסטוריה</span>
+                        <Badge variant="outline" className="text-xs">
+                          {task.history.length} פעולות
+                        </Badge>
+                        <ChevronDown className="w-4 h-4 mr-auto transition-transform" />
                       </div>
-                    </ScrollArea>
-                  </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-3">
+                      <ScrollArea className="max-h-48">
+                        <div className="space-y-2">
+                          {task.history.slice(0, 5).map((entry) => (
+                            <div
+                              key={entry.id}
+                              className="flex items-start gap-3 p-2 rounded-lg bg-muted/40 text-sm"
+                            >
+                              <Avatar className="w-6 h-6 shrink-0">
+                                <AvatarImage
+                                  src={getUserById(entry.userId)?.avatar || "/placeholder.svg"}
+                                />
+                                <AvatarFallback className="text-xs">
+                                  {entry.userName?.split(" ").map((n) => n[0]).join("") || "?"}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-muted-foreground">
+                                  <span className="font-medium text-foreground">{entry.userName || "משתמש"}</span>
+                                  {" "}
+                                  {entry.action === "created" && "יצר/ה את המשימה"}
+                                  {entry.action === "updated" && `עדכן/ה ${entry.field || ""}`}
+                                  {entry.action === "status_changed" && "שינה/תה סטטוס"}
+                                  {entry.action === "column_changed" && "העביר/ה עמודה"}
+                                  {entry.action === "comment_added" && "הוסיף/ה הערה"}
+                                  {entry.action === "handler_changed" && "שינה/תה גורם מטפל"}
+                                  {entry.action === "station_changed" && "שינה/תה תחנה"}
+                                </p>
+                                <p className="text-xs text-muted-foreground/70">
+                                  {format(new Date(entry.timestamp), "dd/MM/yyyy HH:mm", { locale: he })}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          {task.history.length > 5 && (
+                            <p className="text-xs text-muted-foreground text-center py-2">
+                              ועוד {task.history.length - 5} פעולות...
+                            </p>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </div>
               )
             })}
