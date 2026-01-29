@@ -67,6 +67,12 @@ export function Dashboard() {
   }
 
   const filteredTasks = applyFilters(tasks, filters)
+  
+  // For regular views (board, list, calendar), exclude planning tasks
+  const nonPlanningTasks = filteredTasks.filter(task => !task.isPlanning)
+  
+  // Update task count to exclude planning tasks
+  const activeTasksCount = tasks.filter(task => !task.isPlanning).length
 
   const views = [
     { id: "board" as ViewType, label: "בורד", icon: Columns3 },
@@ -102,7 +108,7 @@ export function Dashboard() {
             </div>
             <div>
               <h1 className="text-lg font-bold">לוח משימות</h1>
-              <p className="text-xs text-muted-foreground">{tasks.length} משימות פעילות</p>
+              <p className="text-xs text-muted-foreground">{activeTasksCount} משימות פעילות</p>
             </div>
           </div>
 
@@ -183,9 +189,9 @@ export function Dashboard() {
 
       {/* Main Content */}
       <main className="p-4 sm:p-6">
-        {currentView === "list" && <ListView filteredTasks={filteredTasks} />}
-        {currentView === "board" && <BoardView filteredTasks={filteredTasks} />}
-        {currentView === "calendar" && <CalendarView filteredTasks={filteredTasks} />}
+        {currentView === "list" && <ListView filteredTasks={nonPlanningTasks} />}
+        {currentView === "board" && <BoardView filteredTasks={nonPlanningTasks} />}
+        {currentView === "calendar" && <CalendarView filteredTasks={nonPlanningTasks} />}
         {currentView === "statistics" && <StatisticsDashboard />}
         {currentView === "archive" && <ArchiveView />}
         {currentView === "planning" && <PlanningView filteredTasks={filteredTasks} />}

@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Task } from "@/lib/types"
-import { Search, Calendar, User, X, ClipboardList, Clock, Plus, ChevronUp, ChevronDown } from "lucide-react"
+import { Search, Calendar, User, X, ClipboardList, Clock, Plus, ChevronUp, ChevronDown, ArrowRight } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
 import { he } from "date-fns/locale"
 
@@ -97,6 +97,21 @@ export function PlanningView({ filteredTasks }: { filteredTasks: Task[] }) {
     updateTask(taskId, {
       isPlanning: false,
       planningReceivedAt: undefined,
+    })
+  }
+
+  const pushToTodo = (taskId: string) => {
+    if (isViewer()) return
+    
+    const task = planningTasks.find(t => t.id === taskId)
+    if (!task || !canEditTask(task)) return
+
+    // Move task to To Do board and remove from planning
+    updateTask(taskId, {
+      isPlanning: false,
+      planningReceivedAt: undefined,
+      column: "todo",
+      status: "todo",
     })
   }
 
@@ -358,6 +373,20 @@ export function PlanningView({ filteredTasks }: { filteredTasks: Task[] }) {
                                 <ChevronDown className="w-4 h-4" />
                               </Button>
                             </div>
+                          )}
+                          
+                          {/* Push to To Do */}
+                          {canEdit && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => pushToTodo(task.id)}
+                              className="h-8 gap-1.5 bg-primary hover:bg-primary/90 shadow-sm"
+                              title="דחוף ל-To Do"
+                            >
+                              <ArrowRight className="w-3.5 h-3.5" />
+                              <span className="text-xs">ל-To Do</span>
+                            </Button>
                           )}
                           
                           <Button
