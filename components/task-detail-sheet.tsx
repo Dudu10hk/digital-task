@@ -104,6 +104,49 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
     return <Icon className="w-4 h-4" />
   }
 
+  const getFileIcon = (type: string) => {
+    switch (type) {
+      case "pdf":
+        return <FileText className="w-4 h-4 text-red-500" />
+      case "excel":
+        return <FileText className="w-4 h-4 text-green-600" />
+      case "word":
+        return <FileText className="w-4 h-4 text-blue-600" />
+      default:
+        return <FileText className="w-4 h-4 text-muted-foreground" />
+    }
+  }
+
+  const getFileType = (fileName: string): "pdf" | "excel" | "word" | "other" => {
+    const ext = fileName.split(".").pop()?.toLowerCase()
+    if (ext === "pdf") return "pdf"
+    if (["xlsx", "xls", "csv"].includes(ext || "")) return "excel"
+    if (["doc", "docx"].includes(ext || "")) return "word"
+    return "other"
+  }
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFiles = e.target.files
+    if (!uploadedFiles || !currentUser) return
+
+    const newFiles = Array.from(uploadedFiles).map((file) => ({
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      name: file.name,
+      type: getFileType(file.name),
+      url: URL.createObjectURL(file),
+      uploadedAt: new Date(),
+      uploadedBy: currentUser.id,
+    }))
+
+    // Add files to task
+    updateTask(task.id, { 
+      files: [...task.files, ...newFiles] 
+    })
+    
+    // Reset input
+    e.target.value = ""
+  }
+
   const handleStatusChange = (status: TaskStatus) => {
     updateTask(task.id, { status })
   }
@@ -148,10 +191,6 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
   const handleDelete = () => {
     deleteTask(task.id)
     onOpenChange(false)
-  }
-
-  const getFileIcon = (type: string) => {
-    return <FileText className="w-4 h-4" />
   }
 
   const renderCommentWithMentions = (content: string) => {
@@ -542,20 +581,25 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
               </TabsContent>
 
               <TabsContent value="files" className="mt-5 space-y-4">
-                {/* Upload Button (Demo) */}
-                <Button 
-                  variant="outline" 
-                  className="w-full gap-2 bg-transparent border-dashed border-2 border-border/40 rounded-lg h-12 font-medium" 
-                  disabled
-                >
-                  <Upload className="w-4 h-4" />
-                  העלאת קובץ (דורש חיבור Blob)
-                </Button>
+                {/* Upload Button */}
+                {canEdit && !isViewer() && (
+                  <label className="flex items-center justify-center gap-2 w-full h-12 bg-transparent border-dashed border-2 border-border/40 rounded-lg font-medium cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                    <Upload className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <span className="text-sm">העלאת קובץ</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.csv"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
 
                 {/* Files List */}
                 <div className="space-y-3 pt-2">
                   {task.files.map((file) => (
-                    <div key={file.id} className="flex items-center gap-3 p-4 bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl border border-border/30 hover:border-border/60 transition-colors">
+                    <div key={file.id} className="flex items-center gap-3 p-4 bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl border border-border/30 hover:border-border/60 transition-colors group">
                       <div className="p-2 bg-background rounded-lg">
                         {getFileIcon(file.type)}
                       </div>
@@ -564,6 +608,89 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                         <p className="text-xs text-muted-foreground mt-1">
                           {format(file.uploadedAt, "d MMM yyyy", { locale: he })}
                         </p>
+                      </div>
+                      
+                      {/* File Actions */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* View/Download */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-primary/10 hover:text-primary"
+                          onClick={() => {
+                            // Open file in new tab or download
+                            if (file.url.startsWith('blob:')) {
+                              // For blob URLs, trigger download
+                              const a = document.createElement('a')
+                              a.href = file.url
+                              a.download = file.name
+                              document.body.appendChild(a)
+                              a.click()
+                              document.body.removeChild(a)
+                            } else {
+                              // For regular URLs, open in new tab
+                              window.open(file.url, '_blank')
+                            }
+                          }}
+                          title="צפה/הורד"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+
+                        {/* Download */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-blue-500/10 hover:text-blue-600"
+                          onClick={() => {
+                            const a = document.createElement('a')
+                            a.href = file.url
+                            a.download = file.name
+                            document.body.appendChild(a)
+                            a.click()
+                            document.body.removeChild(a)
+                          }}
+                          title="הורד"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+
+                        {/* Delete (only if can edit) */}
+                        {canEdit && !isViewer() && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                                title="מחק קובץ"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent dir="rtl">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>האם למחוק את הקובץ?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  הקובץ "{file.name}" יימחק לצמיתות מהמשימה.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>ביטול</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => {
+                                    // Remove file from task
+                                    const updatedFiles = task.files.filter(f => f.id !== file.id)
+                                    updateTask(task.id, { files: updatedFiles })
+                                  }}
+                                >
+                                  מחק קובץ
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </div>
                   ))}
