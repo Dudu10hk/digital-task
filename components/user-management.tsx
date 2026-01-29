@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,7 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Users, Shield, User, Crown, Trash2, UserPlus, Edit, Eye } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Users, Shield, User, Crown, Trash2, UserPlus, Edit, Eye, Upload, Link as LinkIcon, Loader2 } from "lucide-react"
 import type { UserRole } from "@/lib/types"
 import { toast } from "sonner"
 
@@ -44,6 +45,9 @@ export function UserManagement() {
   const [newAvatar, setNewAvatar] = useState("")
   const [newRole, setNewRole] = useState<UserRole>("user")
   const [isInviting, setIsInviting] = useState(false)
+  const [uploadingNewAvatar, setUploadingNewAvatar] = useState(false)
+  const [avatarUploadMethod, setAvatarUploadMethod] = useState<"upload" | "url">("url")
+  const newAvatarFileRef = useRef<HTMLInputElement>(null)
   
   // Edit user state
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
@@ -51,8 +55,71 @@ export function UserManagement() {
   const [editEmail, setEditEmail] = useState("")
   const [editPassword, setEditPassword] = useState("")
   const [editAvatar, setEditAvatar] = useState("")
+  const [uploadingEditAvatar, setUploadingEditAvatar] = useState(false)
+  const [editAvatarUploadMethod, setEditAvatarUploadMethod] = useState<"upload" | "url">("url")
+  const editAvatarFileRef = useRef<HTMLInputElement>(null)
 
   if (!isAdmin()) return null
+
+  const handleAvatarFileUpload = async (file: File, isEdit: boolean = false) => {
+    // בדיקת גודל קובץ (מקסימום 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("הקובץ גדול מדי. גודל מקסימלי: 5MB")
+      return
+    }
+
+    // בדיקת סוג קובץ
+    if (!file.type.startsWith("image/")) {
+      toast.error("יש להעלות קובץ תמונה בלבד")
+      return
+    }
+
+    const setUploading = isEdit ? setUploadingEditAvatar : setUploadingNewAvatar
+    const setAvatarUrl = isEdit ? setEditAvatar : setNewAvatar
+
+    setUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("userId", isEdit ? editingUserId || "temp" : "temp-new-user")
+
+      const response = await fetch("/api/upload/avatar", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "שגיאה בהעלאת התמונה")
+      }
+
+      setAvatarUrl(data.url)
+      toast.success("תמונה הועלתה בהצלחה!")
+    } catch (error) {
+      console.error("Error uploading avatar:", error)
+      toast.error(error instanceof Error ? error.message : "שגיאה בהעלאת התמונה")
+    } finally {
+      setUploading(false)
+      if (isEdit && editAvatarFileRef.current) {
+        editAvatarFileRef.current.value = ""
+      }
+      if (!isEdit && newAvatarFileRef.current) {
+        newAvatarFileRef.current.value = ""
+      }
+    }
+  }
+
+  const handleNewAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) await handleAvatarFileUpload(file, false)
+  }
+
+  const handleEditAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) await handleAvatarFileUpload(file, true)
+  }
 
   const handleInviteUser = async () => {
     if (!newName.trim() || !newEmail.trim()) {
@@ -247,16 +314,56 @@ export function UserManagement() {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="newAvatar" className="text-sm">URL תמונה (אופציונלי)</Label>
-                <Input
-                  id="newAvatar"
-                  placeholder="https://..."
-                  value={newAvatar}
-                  onChange={(e) => setNewAvatar(e.target.value)}
-                  disabled={isInviting}
-                  className="bg-background h-11"
-                  dir="ltr"
-                />
+                <Label className="text-sm">תמונת פרופיל (אופציונלי)</Label>
+                <Tabs value={avatarUploadMethod} onValueChange={(v) => setAvatarUploadMethod(v as "upload" | "url")} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="url" className="gap-2">
+                      <LinkIcon className="w-3.5 h-3.5" />
+                      קישור
+                    </TabsTrigger>
+                    <TabsTrigger value="upload" className="gap-2">
+                      <Upload className="w-3.5 h-3.5" />
+                      העלאת קובץ
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="url" className="space-y-2 mt-2">
+                    <Input
+                      id="newAvatar"
+                      placeholder="https://example.com/image.jpg"
+                      value={newAvatar}
+                      onChange={(e) => setNewAvatar(e.target.value)}
+                      disabled={isInviting}
+                      className="bg-background h-10"
+                      dir="ltr"
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="upload" className="space-y-2 mt-2">
+                    <Input
+                      ref={newAvatarFileRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleNewAvatarFileChange}
+                      disabled={isInviting || uploadingNewAvatar}
+                      className="cursor-pointer h-10"
+                    />
+                    {uploadingNewAvatar && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        מעלה תמונה...
+                      </div>
+                    )}
+                    {newAvatar && avatarUploadMethod === "upload" && (
+                      <div className="flex items-center gap-2 text-sm text-green-600">
+                        ✓ תמונה הועלתה בהצלחה
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
+                <p className="text-xs text-muted-foreground">
+                  גודל מקסימלי: 5MB • פורמטים: JPG, PNG, GIF, WebP
+                </p>
               </div>
               <div className="space-y-2">
                 <Label className="text-sm">הרשאות</Label>
@@ -347,13 +454,54 @@ export function UserManagement() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-sm">URL תמונה (אופציונלי)</Label>
-                          <Input
-                            value={editAvatar}
-                            onChange={(e) => setEditAvatar(e.target.value)}
-                            className="h-10"
-                            dir="ltr"
-                          />
+                          <Label className="text-sm">תמונת פרופיל (אופציונלי)</Label>
+                          <Tabs value={editAvatarUploadMethod} onValueChange={(v) => setEditAvatarUploadMethod(v as "upload" | "url")} className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                              <TabsTrigger value="url" className="gap-2">
+                                <LinkIcon className="w-3.5 h-3.5" />
+                                קישור
+                              </TabsTrigger>
+                              <TabsTrigger value="upload" className="gap-2">
+                                <Upload className="w-3.5 h-3.5" />
+                                העלאת קובץ
+                              </TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="url" className="space-y-2 mt-2">
+                              <Input
+                                value={editAvatar}
+                                onChange={(e) => setEditAvatar(e.target.value)}
+                                placeholder="https://example.com/image.jpg"
+                                className="h-10"
+                                dir="ltr"
+                              />
+                            </TabsContent>
+
+                            <TabsContent value="upload" className="space-y-2 mt-2">
+                              <Input
+                                ref={editAvatarFileRef}
+                                type="file"
+                                accept="image/*"
+                                onChange={handleEditAvatarFileChange}
+                                disabled={uploadingEditAvatar}
+                                className="cursor-pointer h-10"
+                              />
+                              {uploadingEditAvatar && (
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  מעלה תמונה...
+                                </div>
+                              )}
+                              {editAvatar && editAvatarUploadMethod === "upload" && (
+                                <div className="flex items-center gap-2 text-sm text-green-600">
+                                  ✓ תמונה הועלתה בהצלחה
+                                </div>
+                              )}
+                            </TabsContent>
+                          </Tabs>
+                          <p className="text-xs text-muted-foreground">
+                            גודל מקסימלי: 5MB • פורמטים: JPG, PNG, GIF, WebP
+                          </p>
                         </div>
                         <div className="flex gap-2">
                           <Button onClick={handleSaveEdit} size="sm" className="flex-1">
