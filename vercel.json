@@ -5,29 +5,6 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "regions": ["iad1"],
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": {
-      "type": "secret",
-      "description": "Supabase project URL from dashboard"
-    },
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": {
-      "type": "secret",
-      "description": "Supabase anonymous key from dashboard"
-    },
-    "RESEND_API_KEY": {
-      "type": "secret",
-      "description": "Resend API key for email sending"
-    },
-    "NEXT_PUBLIC_APP_URL": {
-      "type": "system",
-      "description": "Automatically set by Vercel"
-    },
-    "RESEND_FROM_EMAIL": {
-      "type": "plain",
-      "value": "onboarding@resend.dev",
-      "description": "From email address (change after domain verification)"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
