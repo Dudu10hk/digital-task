@@ -73,6 +73,11 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
     }
   }, [mode, task, open, defaultColumn])
 
+  const statusOptionsArray = statusOptions.map((opt) => ({
+    value: opt.value,
+    label: opt.label,
+  }))
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -486,14 +491,18 @@ export function TaskDialog({ open, onOpenChange, mode, task, defaultColumn }: Ta
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {statusOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      <div className="flex items-center gap-2.5">
-                        <div className={`w-3 h-3 rounded-full ${statusConfig[opt.value].color}`} />
-                        <span className="font-medium">{opt.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {statusOptionsArray.map((opt) => {
+                    const config = statusConfig[opt.value as TaskStatus]
+                    if (!config) return null
+                    return (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-3 h-3 rounded-full ${config.color}`} />
+                          <span className="font-medium">{opt.label}</span>
+                        </div>
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
