@@ -3,13 +3,14 @@
 import { useState, useMemo } from "react"
 import { useTaskContext } from "@/lib/task-context"
 import { TaskDetailSheet } from "@/components/task-detail-sheet"
+import { PlanningTaskDialog } from "@/components/planning-task-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Task } from "@/lib/types"
-import { Search, Calendar, User, X, ClipboardList, Clock } from "lucide-react"
+import { Search, Calendar, User, X, ClipboardList, Clock, Plus } from "lucide-react"
 import { format, formatDistanceToNow } from "date-fns"
 import { he } from "date-fns/locale"
 
@@ -22,6 +23,7 @@ export function PlanningView({ filteredTasks }: { filteredTasks: Task[] }) {
   const [sortField, setSortField] = useState<SortField>("waitingTime")
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
   // Filter only planning tasks
   const planningTasks = useMemo(() => {
@@ -127,6 +129,17 @@ export function PlanningView({ filteredTasks }: { filteredTasks: Task[] }) {
             </p>
           </div>
         </div>
+        
+        {/* Add Planning Task Button */}
+        {!isViewer() && (
+          <Button 
+            onClick={() => setIsCreateDialogOpen(true)} 
+            className="gap-2 shadow-lg shadow-primary/25 h-11 px-6 font-medium rounded-lg"
+          >
+            <Plus className="w-4 h-4" />
+            משימת תכנון חדשה
+          </Button>
+        )}
       </div>
 
       {/* Search Bar */}
@@ -317,6 +330,12 @@ export function PlanningView({ filteredTasks }: { filteredTasks: Task[] }) {
           onOpenChange={(open) => !open && setSelectedTask(null)}
         />
       )}
+
+      {/* Create Planning Task Dialog */}
+      <PlanningTaskDialog 
+        open={isCreateDialogOpen} 
+        onOpenChange={setIsCreateDialogOpen} 
+      />
     </div>
   )
 }
