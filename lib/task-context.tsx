@@ -339,14 +339,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   const updateUserRole = async (userId: string, role: UserRole) => {
     try {
-      // עדכן ב-DB קודם
-      const { error } = await supabase
-        .from('users')
-        .update({ role })
-        .eq('id', userId)
-      
-      if (error) throw error
-      
       // עדכן state מקומי
       setUsers((prev) =>
         prev.map((user) => (user.id === userId ? { ...user, role } : user))
@@ -361,6 +353,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
         console.log('✅ Updated current user role:', role)
       }
+      
+      toast.success('הרשאות המשתמש עודכנו בהצלחה')
     } catch (error) {
       console.error('Error updating user role:', error)
       toast.error('שגיאה בעדכון הרשאות משתמש')
@@ -376,15 +370,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       }
 
-      const { error } = await supabase
-        .from('users')
-        .insert([newUser])
-
-      if (error) throw error
-
       setUsers((prev) => [...prev, newUser])
+      toast.success('משתמש חדש נוסף בהצלחה')
     } catch (error) {
-      // Error adding user
+      console.error('Error adding user:', error)
+      toast.error('שגיאה בהוספת משתמש')
       throw error
     }
   }
@@ -407,13 +397,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId)
-
-      if (error) throw error
-
       // תיקון: נקה את כל ההפניות למשתמש הנמחק מהמשימות
       setTasks((prev) => 
         prev.map((task) => {
@@ -475,13 +458,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', userId)
-
-      if (error) throw error
-
       setUsers((prev) =>
         prev.map((user) => (user.id === userId ? { ...user, ...updates } : user))
       )
@@ -495,9 +471,38 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // עדכן את הנתונים גם במשימות
+      setTasks((prev) =>
+        prev.map((task) => {
+          let updated = { ...task }
+          
+          // עדכן assignee אם זה המשתמש המעודכן
+          if (task.assigneeId === userId) {
+            updated = {
+              ...updated,
+              assigneeName: updates.name || task.assigneeName,
+              assigneeAvatar: updates.avatar !== undefined ? updates.avatar : task.assigneeAvatar,
+            }
+          }
+          
+          // עדכן handler אם זה המשתמש המעודכן
+          if (task.handlerId === userId) {
+            updated = {
+              ...updated,
+              handlerName: updates.name || task.handlerName,
+              handlerAvatar: updates.avatar !== undefined ? updates.avatar : task.handlerAvatar,
+            }
+          }
+          
+          return updated
+        })
+      )
+
+      toast.success('המשתמש עודכן בהצלחה')
       return true
     } catch (error) {
-      // Error editing user
+      console.error('Error editing user:', error)
+      toast.error('שגיאה בעדכון המשתמש')
       return false
     }
   }
@@ -506,13 +511,6 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     if (!currentUser) return false
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ avatar: avatarUrl })
-        .eq('id', currentUser.id)
-
-      if (error) throw error
-
       // עדכן את המשתמש המקומי
       const updatedUser = { ...currentUser, avatar: avatarUrl }
       setCurrentUser(updatedUser)
@@ -527,9 +525,28 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         prev.map((user) => (user.id === currentUser.id ? updatedUser : user))
       )
 
+      // עדכן בכל המשימות
+      setTasks((prev) =>
+        prev.map((task) => {
+          let updated = { ...task }
+          
+          if (task.assigneeId === currentUser.id) {
+            updated = { ...updated, assigneeAvatar: avatarUrl }
+          }
+          
+          if (task.handlerId === currentUser.id) {
+            updated = { ...updated, handlerAvatar: avatarUrl }
+          }
+          
+          return updated
+        })
+      )
+
+      toast.success('תמונת הפרופיל עודכנה בהצלחה')
       return true
     } catch (error) {
       console.error('Error updating avatar:', error)
+      toast.error('שגיאה בעדכון תמונת הפרופיל')
       return false
     }
   }
