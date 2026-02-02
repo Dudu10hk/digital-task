@@ -1,5 +1,5 @@
 import { Resend } from 'resend'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { invitationEmailTemplate } from '@/lib/email-templates'
 import { NextRequest, NextResponse } from 'next/server'
 import type { UserRole } from '@/lib/types'
@@ -57,6 +57,17 @@ export async function POST(request: NextRequest) {
 
     const sanitizedEmail = sanitizeString(emailValidation.data)
     const sanitizedName = sanitizeString(nameValidation.data)
+
+    // 3. במצב Demo - לא ניתן להוסיף משתמשים (אין DB אמיתי)
+    if (!isSupabaseConfigured) {
+      return NextResponse.json(
+        { 
+          error: 'במצב Demo לא ניתן להוסיף משתמשים חדשים. אנא הגדר Supabase כדי להפעיל תכונה זו.',
+          demo_mode: true
+        },
+        { status: 503 }
+      )
+    }
 
     // 3. בדיקה שהאימייל לא קיים כבר
     const { data: existingUser } = await supabase
