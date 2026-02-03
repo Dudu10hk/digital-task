@@ -9,7 +9,7 @@ import { emailSchema, userNameSchema, passwordSchema, sanitizeString } from '@/l
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, role, adminId, password } = body
+    const { name, email, role, adminId, password, avatar } = body
 
     // 1. Rate Limiting
     const identifier = getIdentifier(request, adminId)
@@ -58,15 +58,25 @@ export async function POST(request: NextRequest) {
     const sanitizedEmail = sanitizeString(emailValidation.data)
     const sanitizedName = sanitizeString(nameValidation.data)
 
-    // 3. במצב Demo - לא ניתן להוסיף משתמשים (אין DB אמיתי)
+    // 3. במצב Demo - שמור משתמש מקומית בלי Supabase
     if (!isSupabaseConfigured) {
-      return NextResponse.json(
-        { 
-          error: 'במצב Demo לא ניתן להוסיף משתמשים חדשים. אנא הגדר Supabase כדי להפעיל תכונה זו.',
-          demo_mode: true
-        },
-        { status: 503 }
-      )
+      const defaultPassword = `${sanitizedName.split(' ')[0].toLowerCase()}123`
+      const newUser = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        name: sanitizedName,
+        email: sanitizedEmail,
+        role: role as UserRole,
+        password: password || defaultPassword,
+        avatar: avatar || undefined
+      }
+      
+      return NextResponse.json({
+        success: true,
+        message: `משתמש ${sanitizedName} נוצר בהצלחה במצב Demo`,
+        user: newUser,
+        demo_mode: true,
+        note: 'במצב Demo, המשתמשים נשמרים מקומית בלבד'
+      }, { status: 201 })
     }
 
     // 3. בדיקה שהאימייל לא קיים כבר
@@ -84,13 +94,14 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. יצירת משתמש חדש
+    const defaultPassword = `${sanitizedName.split(' ')[0].toLowerCase()}123`
     const newUser = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: sanitizedName,
       email: sanitizedEmail,
       role: role as UserRole,
-      password: password || '',
-      avatar: undefined
+      password: password || defaultPassword,
+      avatar: avatar || undefined
     }
 
     const { error: userError } = await supabase
@@ -105,90 +116,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 5. יצירת קוד OTP להזמנה
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 שעות
-
-    const { error: otpError } = await supabase
-      .from('otp_codes')
-      .insert({
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        email: sanitizedEmail,
-        code,
-        expires_at: expiresAt.toISOString(),
-        used: false
-      })
-
-    if (otpError) {
-      console.error('Error creating OTP:', otpError)
-      await supabase.from('users').delete().eq('id', newUser.id)
-      return NextResponse.json(
-        { error: 'כשל ביצירת הזמנה' },
-        { status: 500 }
-      )
-    }
-
-    // 6. קבלת פרטי המנהל
-    let inviterName = 'המנהל'
-    if (adminId) {
-      const { data: admin } = await supabase
-        .from('users')
-        .select('name')
-        .eq('id', adminId)
-        .single()
-      
-      if (admin) {
-        inviterName = sanitizeString(admin.name)
-      }
-    }
-
-    // 7. שליחת מייל
-    try {
-      const apiKey = process.env.RESEND_API_KEY
-      
-      if (!apiKey) {
-        console.error('RESEND_API_KEY is not configured')
-        return NextResponse.json(
-          { 
-            success: true, 
-            warning: 'משתמש נוצר אך שירות המייל לא מוגדר',
-            user: newUser 
-          },
-          { status: 201, headers: rateLimit.headers }
-        )
-      }
-
-      const resend = new Resend(apiKey)
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-      
-      await resend.emails.send({
-        from: `TaskFlow <${fromEmail}>`,
-        to: sanitizedEmail,
-        subject: `${inviterName} הזמין אותך ל-TaskFlow! 🎉`,
-        html: invitationEmailTemplate(sanitizedName, code, inviterName, appUrl)
-      })
-
-    } catch (emailError: any) {
-      console.error('Error sending invitation email:', emailError.message)
-      return NextResponse.json(
-        { 
-          success: true, 
-          warning: `משתמש נוצר אך המייל נכשל`,
-          user: newUser
-        },
-        { status: 201, headers: rateLimit.headers }
-      )
-    }
-
+    // 5. החזר הצלחה (ללא שליחת מייל)
     return NextResponse.json({
       success: true,
-      message: `הזמנה נשלחה ל-${sanitizedEmail}`,
+      message: `משתמש ${sanitizedName} נוצר בהצלחה!`,
       user: {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role
+        role: newUser.role,
+        password: newUser.password
       }
     }, { status: 201, headers: rateLimit.headers })
 

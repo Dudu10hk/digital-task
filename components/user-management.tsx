@@ -38,7 +38,7 @@ import type { UserRole } from "@/lib/types"
 import { toast } from "sonner"
 
 export function UserManagement() {
-  const { users, currentUser, updateUserRole, isAdmin, deleteUser, editUser, tasks } = useTaskContext()
+  const { users, currentUser, updateUserRole, isAdmin, deleteUser, editUser, tasks, addUser } = useTaskContext()
   const [newName, setNewName] = useState("")
   const [newEmail, setNewEmail] = useState("")
   const [newPassword, setNewPassword] = useState("")
@@ -133,42 +133,63 @@ export function UserManagement() {
     setIsInviting(true)
 
     try {
-      const response = await fetch('/api/auth/invite', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Call the API to create the user
+      const response = await fetch("/api/auth/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           name: newName.trim(),
           email: newEmail.trim(),
-          password: newPassword.trim() || undefined,
+          password: newPassword.trim(),
           role: newRole,
-          adminId: currentUser?.id
-        })
+          avatar: newAvatar.trim() || undefined,
+          adminId: currentUser?.id,
+        }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        toast.error(data.error || "שגיאה בשליחת ההזמנה")
+        toast.error(data.error || "שגיאה בהוספת משתמש")
         return
       }
 
-      if (data.warning) {
-        toast.warning(`${data.warning}. ניתן לשלוח הזמנה שוב מניהול המשתמשים.`)
-      } else {
-        toast.success(`הזמנה נשלחה בהצלחה ל-${newEmail}! 📧`)
-      }
+      // Show success message with credentials
+      const userPassword = data.user?.password || newPassword.trim() || "demo123"
+      const userEmail = data.user?.email || newEmail.trim()
       
-      // Reload users to show the new user
-      window.location.reload()
-      
-      // Reset form
+      toast.success(
+        <div className="space-y-2">
+          <p className="font-semibold">המשתמש {data.user?.name} נוסף בהצלחה! 🎉</p>
+          <div className="text-sm space-y-1 p-2 bg-muted rounded-md">
+            <p><strong>אימייל:</strong> {userEmail}</p>
+            <p><strong>סיסמה:</strong> {userPassword}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">שמור פרטים אלו - הם לא יוצגו שוב</p>
+          <p className="text-xs text-muted-foreground mt-2">הדף יתרענן בעוד כמה שניות...</p>
+        </div>,
+        {
+          duration: 15000, // 15 seconds
+        }
+      )
+
+      // Reset form immediately
       setNewName("")
       setNewEmail("")
       setNewPassword("")
       setNewAvatar("")
       setNewRole("user")
+      
+      // Reload page after a delay to refresh users list
+      // Give user time to copy the credentials
+      setTimeout(() => {
+        window.location.reload()
+      }, 3000) // 3 seconds - enough time to see the message
     } catch (error) {
-      toast.error("שגיאה בשליחת ההזמנה")
+      console.error("Error inviting user:", error)
+      toast.error("שגיאה בהוספת משתמש")
     } finally {
       setIsInviting(false)
     }
@@ -263,10 +284,10 @@ export function UserManagement() {
           <div className="space-y-3 p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl border border-primary/20">
             <Label className="text-base font-semibold flex items-center gap-2">
               <UserPlus className="w-5 h-5" />
-              הזמנת משתמש חדש למערכת
+              הוספת משתמש חדש למערכת
             </Label>
             <div className="text-sm text-muted-foreground mb-3 p-3 bg-background/50 rounded-lg">
-              <p>המשתמש יוכל להיכנס באמצעות OTP שנשלח למייל, או בסיסמה קבועה אם הוגדרה.</p>
+              <p>המשתמש יתווסף מיד למערכת ויוכל להיכנס באמצעות האימייל והסיסמה.</p>
             </div>
             <div className="grid gap-3">
               <div className="space-y-2">
@@ -295,7 +316,7 @@ export function UserManagement() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword" className="text-sm">
-                  סיסמה (אופציונלי - אם לא מוגדר, כניסה רק עם OTP)
+                  סיסמה (אופציונלי - ברירת מחדל: [שם_ראשון]123)
                 </Label>
                 <Input
                   id="newPassword"
@@ -307,7 +328,7 @@ export function UserManagement() {
                   className="bg-background h-11"
                 />
                 <p className="text-xs text-muted-foreground">
-                  אם תגדיר סיסמה, המשתמש יוכל להיכנס גם בסיסמה וגם ב-OTP
+                  אם לא תוזן סיסמה, הסיסמה תהיה: [שם_ראשון]123 (למשל: יוסי123)
                 </p>
               </div>
               <div className="space-y-2">
@@ -396,7 +417,7 @@ export function UserManagement() {
                 className="w-full gap-2 h-11 font-semibold"
               >
                 <UserPlus className="w-4 h-4" />
-                {isInviting ? "שולח הזמנה..." : "שלח הזמנה למייל"}
+                {isInviting ? "מוסיף משתמש..." : "הוסף משתמש"}
               </Button>
             </div>
           </div>
