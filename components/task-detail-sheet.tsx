@@ -77,6 +77,8 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
   const [taggedUserIds, setTaggedUserIds] = useState<string[]>([])
   const [showFigmaPreview, setShowFigmaPreview] = useState(false)
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [editedTitle, setEditedTitle] = useState(task.title)
   const canEdit = canEditTask(task)
 
   const statusOptions = Object.entries(statusConfig).map(([value, config]) => ({
@@ -236,6 +238,18 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
     onOpenChange(false)
   }
 
+  const handleSaveTitle = () => {
+    if (editedTitle.trim() && editedTitle !== task.title) {
+      updateTask(task.id, { title: editedTitle.trim() })
+    }
+    setIsEditingTitle(false)
+  }
+
+  const handleCancelEditTitle = () => {
+    setEditedTitle(task.title)
+    setIsEditingTitle(false)
+  }
+
   const renderCommentWithMentions = (content: string) => {
     let result = sanitizeString(content)
     users.forEach((user) => {
@@ -251,9 +265,44 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
         <DialogHeader className="p-6 pb-4 border-b bg-gradient-to-b from-primary/5 to-transparent">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <DialogTitle className="text-right text-2xl font-bold leading-tight bg-gradient-to-l from-primary to-primary/60 bg-clip-text text-transparent">
-                {task.title}
-              </DialogTitle>
+              {isEditingTitle ? (
+                <div className="space-y-2">
+                  <Input
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    className="text-lg font-bold h-12"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveTitle()
+                      if (e.key === 'Escape') handleCancelEditTitle()
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleSaveTitle} className="h-8">
+                      שמור כותרת
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleCancelEditTitle} className="h-8">
+                      ביטול
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="group/title">
+                  <DialogTitle className="text-right text-2xl font-bold leading-tight bg-gradient-to-l from-primary to-primary/60 bg-clip-text text-transparent">
+                    {task.title}
+                  </DialogTitle>
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditingTitle(true)}
+                      className="mt-2 h-7 text-xs opacity-0 group-hover/title:opacity-100 transition-opacity"
+                    >
+                      ערוך כותרת
+                    </Button>
+                  )}
+                </div>
+              )}
               {!canEdit && (
                 <p className="text-sm text-muted-foreground mt-2 flex items-center gap-2">
                   <Eye className="w-4 h-4" />
@@ -427,8 +476,10 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                       <SelectItem key={user.id} value={user.id}>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="w-6 h-6 ring-2 ring-background">
-                            <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                            <AvatarFallback className="text-[9px] bg-primary/10 text-primary">{user.name.slice(0, 2)}</AvatarFallback>
+                            <AvatarImage src={user.avatar} />
+                            <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                              {user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            </AvatarFallback>
                           </Avatar>
                           <span className="font-medium">{user.name}</span>
                         </div>
@@ -452,8 +503,10 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
                       <SelectItem key={user.id} value={user.id}>
                         <div className="flex items-center gap-2.5">
                           <Avatar className="w-6 h-6 ring-2 ring-amber-400">
-                            <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                            <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700">{user.name.slice(0, 2)}</AvatarFallback>
+                            <AvatarImage src={user.avatar} />
+                            <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700">
+                              {user.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            </AvatarFallback>
                           </Avatar>
                           <span className="font-medium">{user.name}</span>
                         </div>
@@ -771,35 +824,39 @@ export function TaskDetailSheet({ task, open, onOpenChange }: TaskDetailSheetPro
 
                 {/* Comments List */}
                 <div className="space-y-3 pt-2">
-                  {task.comments.map((comment) => (
-                    <div key={comment.id} className="bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl p-4 border border-border/30">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Avatar className="w-8 h-8 ring-2 ring-background">
-                          <AvatarFallback className="text-[11px] bg-primary/10 text-primary font-semibold">
-                            {comment.authorName.slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-semibold text-sm">{comment.authorName}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {format(comment.createdAt, "d MMM, HH:mm", { locale: he })}
-                        </span>
-                      </div>
-                      <p className="text-sm leading-relaxed pr-11">{renderCommentWithMentions(comment.content)}</p>
-                      {comment.taggedUserIds && comment.taggedUserIds.length > 0 && (
-                        <div className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground pr-11">
-                          <span>תויגו:</span>
-                          {comment.taggedUserIds.map((userId) => {
-                            const user = users.find((u) => u.id === userId)
-                            return user ? (
-                              <span key={userId} className="text-primary font-medium">
-                                @{user.name}
-                              </span>
-                            ) : null
-                          })}
+                  {task.comments.map((comment) => {
+                    const commentAuthor = users.find(u => u.name === comment.authorName)
+                    return (
+                      <div key={comment.id} className="bg-gradient-to-br from-muted/40 to-muted/20 rounded-xl p-4 border border-border/30">
+                        <div className="flex items-center gap-3 mb-3">
+                          <Avatar className="w-8 h-8 ring-2 ring-background">
+                            <AvatarImage src={commentAuthor?.avatar || "/placeholder.svg"} />
+                            <AvatarFallback className="text-[11px] bg-primary/10 text-primary font-semibold">
+                              {comment.authorName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-semibold text-sm">{comment.authorName}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(comment.createdAt, "d MMM, HH:mm", { locale: he })}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        <p className="text-sm leading-relaxed pr-11">{renderCommentWithMentions(comment.content)}</p>
+                        {comment.taggedUserIds && comment.taggedUserIds.length > 0 && (
+                          <div className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground pr-11">
+                            <span>תויגו:</span>
+                            {comment.taggedUserIds.map((userId) => {
+                              const user = users.find((u) => u.id === userId)
+                              return user ? (
+                                <span key={userId} className="text-primary font-medium">
+                                  @{user.name}
+                                </span>
+                              ) : null
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                   {task.comments.length === 0 && (
                     <div className="text-center py-12">
                       <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />

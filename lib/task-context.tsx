@@ -702,7 +702,19 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       }
 
       setArchivedTasks((prev) => [archivedTask, ...prev])
-      setTasks((prev) => prev.filter((t) => t.id !== taskId))
+      
+      // Remove task and reorder remaining tasks in the same column
+      setTasks((prev) => {
+        const filtered = prev.filter((t) => t.id !== taskId)
+        
+        // Reorder tasks in the same column
+        return filtered.map(t => {
+          if (t.column === task.column && t.order > task.order) {
+            return { ...t, order: t.order - 1 }
+          }
+          return t
+        })
+      })
       
       if (reason === "completed") {
         toast.success(`המשימה "${task.title}" הועברה לארכיון`)
@@ -830,13 +842,27 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }
 
   const updateTaskColumn = (taskId: string, column: BoardColumn) => {
+    const task = tasks.find(t => t.id === taskId)
+    if (!task) return
+    
+    const oldColumn = task.column
+    const oldOrder = task.order
+    
     // Get max order in target column and set new task to end
     const tasksInColumn = tasks.filter(t => t.column === column)
     const maxOrder = tasksInColumn.length > 0 ? Math.max(...tasksInColumn.map(t => t.order)) : 0
+    
     updateTask(taskId, { column, order: maxOrder + 1 })
     
-    // הסרתי את הארכיון האוטומטי!
-    // עכשיו רק המשתמש יכול להעביר לארכיון באופן ידני
+    // Fix order in the old column
+    setTasks((prev) => {
+      return prev.map(t => {
+        if (t.column === oldColumn && t.order > oldOrder) {
+          return { ...t, order: t.order - 1 }
+        }
+        return t
+      })
+    })
   }
 
   const reorderTaskInColumn = async (taskId: string, newOrder: number, column: BoardColumn) => {

@@ -180,9 +180,9 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
               {handler && (
                 <div className="relative z-10" title={`גורם מטפל: ${handler.name}`}>
                   <Avatar className="w-7 h-7 ring-2 ring-white shadow-sm">
-                    <AvatarImage src={handler.avatar || "/placeholder.svg"} alt={handler.name} />
+                    <AvatarImage src={handler.avatar} alt={handler.name} />
                     <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700 font-bold">
-                      {handler.name.split(" ").map((n) => n[0]).join("")}
+                      {handler.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm ring-1 ring-slate-100">
@@ -194,9 +194,9 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
               {/* Assignee Avatar */}
               {assignee && (
                 <Avatar className="w-8 h-8 ring-2 ring-white shadow-md z-0" title={`אחראי: ${assignee.name}`}>
-                  <AvatarImage src={assignee.avatar || "/placeholder.svg"} alt={assignee.name} />
-                  <AvatarFallback className="text-[10px] bg-primary text-primary-foreground font-bold">
-                    {assignee.name.split(" ").map((n) => n[0]).join("")}
+                  <AvatarImage src={assignee.avatar} alt={assignee.name} />
+                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">
+                    {assignee.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
               )}

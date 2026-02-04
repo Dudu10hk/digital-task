@@ -27,6 +27,9 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [uploading, setUploading] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar || "")
   const [uploadMethod, setUploadMethod] = useState<"upload" | "url">("upload")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // עדכן את avatarUrl כש-currentUser משתנה או כשהדיאלוג נפתח
@@ -150,6 +153,61 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     )
   }
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!newPassword || !confirmPassword) {
+      toast.error("יש למלא את כל השדות")
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("הסיסמאות לא תואמות")
+      return
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("הסיסמה חייבת להיות לפחות 6 תווים")
+      return
+    }
+
+    setIsChangingPassword(true)
+
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: currentUser?.id,
+          newPassword: newPassword,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast.error(data.error || "שגיאה בשינוי הסיסמה")
+        return
+      }
+
+      toast.success("הסיסמה שונתה בהצלחה!")
+      setNewPassword("")
+      setConfirmPassword("")
+      
+      // Close dialog after success
+      setTimeout(() => {
+        onOpenChange(false)
+      }, 1500)
+    } catch (error) {
+      console.error("Error changing password:", error)
+      toast.error("שגיאה בשינוי הסיסמה")
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md" dir="rtl">
@@ -248,6 +306,59 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
               מעלה תמונה...
             </div>
           )}
+
+          {/* Change Password Section */}
+          <div className="pt-4 border-t">
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <h3 className="font-semibold text-sm">שינוי סיסמה</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="new-password">סיסמה חדשה</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="הזן סיסמה חדשה"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  minLength={6}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">אימות סיסמה</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="הזן את הסיסמה שוב"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  minLength={6}
+                />
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                הסיסמה חייבת להיות לפחות 6 תווים
+              </p>
+
+              <Button 
+                type="submit" 
+                disabled={isChangingPassword || !newPassword || !confirmPassword}
+                className="w-full"
+                variant="outline"
+              >
+                {isChangingPassword ? (
+                  <>
+                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                    משנה סיסמה...
+                  </>
+                ) : (
+                  "שנה סיסמה"
+                )}
+              </Button>
+            </form>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
