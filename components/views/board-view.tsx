@@ -210,7 +210,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
               {columnTasks.map((task, index) => {
                 const showPriorityNumber = canReorderInColumn(column.id) // הצג מספר בכל עמודה שמאפשרת סידור מחדש
                 const canReorder = canReorderInColumn(column.id)
-                const isDropTargetBefore = dropTargetIndex === task.order + 1
+                const displayNumber = index + 1 // המספר שמוצג למשתמש (1, 2, 3...)
+                const isDropTargetBefore = dropTargetIndex === displayNumber + 1
                 
                 return (
                   <div key={task.id} className="mb-3">
@@ -237,7 +238,7 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                             />
                           ) : (
                             <div className="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md group-hover:scale-110 group-hover:bg-primary/90 transition-all">
-                              {task.order}
+                              {displayNumber}
                             </div>
                           )}
                         </div>
@@ -266,8 +267,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                         className={`h-0.5 mt-2 rounded-full transition-all duration-200 ${
                           isDropTargetBefore ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
                         }`}
-                        onDragOver={(e) => handleDragOverDropZone(e, column.id, task.order + 1)}
-                        onDrop={(e) => handleDropAtIndex(e, column.id, task.order + 1)}
+                        onDragOver={(e) => handleDragOverDropZone(e, column.id, displayNumber + 1)}
+                        onDrop={(e) => handleDropAtIndex(e, column.id, displayNumber + 1)}
                       />
                     )}
                   </div>
