@@ -65,36 +65,44 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
   return (
     <>
       <Card
-        className={`group cursor-pointer bg-card hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-border/60 ${draggable ? "cursor-grab active:cursor-grabbing active:shadow-2xl" : ""}`}
+        className={`group cursor-pointer bg-card hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 border-border/40 overflow-hidden relative ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
         onClick={handleCardClick}
         draggable={draggable}
         onDragStart={onDragStart}
       >
+        {/* Priority Indicator Strip */}
+        <div className={`absolute top-0 right-0 bottom-0 w-1 ${
+          task.priority === 'high' ? 'bg-rose-500' : 
+          task.priority === 'medium' ? 'bg-amber-500' : 'bg-sky-500'
+        }`} />
+
         <CardContent className={compact ? "p-4" : "p-5"}>
           {/* Header */}
           <div className="flex items-start justify-between gap-3 mb-3">
-            <h3 className="font-semibold text-sm leading-relaxed line-clamp-2 flex-1">{task.title}</h3>
+            <h3 className="font-bold text-[15px] leading-snug line-clamp-2 flex-1 text-foreground/90 group-hover:text-primary transition-colors">
+              {task.title}
+            </h3>
             {canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 -mt-1 -ml-1"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all shrink-0 -mt-1 -ml-1 hover:bg-muted rounded-full"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-40">
                   <div dir="rtl">
-                    <DropdownMenuItem onClick={onEdit} className="gap-2">
+                    <DropdownMenuItem onClick={onEdit} className="gap-2 cursor-pointer">
                       <Edit className="w-4 h-4" />
                       עריכה
                     </DropdownMenuItem>
                     {task.column === "done" && (
                       <DropdownMenuItem
                         onClick={() => archiveTask(task.id, "completed")}
-                        className="gap-2 text-emerald-600 focus:text-emerald-600"
+                        className="gap-2 text-emerald-600 focus:text-emerald-600 cursor-pointer"
                       >
                         <Archive className="w-4 h-4" />
                         העבר לארכיון
@@ -102,7 +110,7 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
                     )}
                     <DropdownMenuItem
                       onClick={() => deleteTask(task.id)}
-                      className="gap-2 text-destructive focus:text-destructive"
+                      className="gap-2 text-destructive focus:text-destructive cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                       מחיקה
@@ -115,20 +123,26 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
 
           {/* Description */}
           {!compact && task.description && (
-            <p className="text-muted-foreground text-xs leading-relaxed line-clamp-2 mb-4">{task.description}</p>
+            <p className="text-muted-foreground text-[13px] leading-relaxed line-clamp-2 mb-4 font-normal">
+              {task.description}
+            </p>
           )}
 
           {/* Status & Priority Badges */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            <Badge className={`${statusConfig[task.status]?.bgClass || "bg-gray-500"} text-xs font-medium`}>
+          <div className="flex flex-wrap gap-2 mb-5">
+            <Badge 
+              variant="secondary"
+              className={`${statusConfig[task.status]?.bgClass || "bg-gray-100"} text-[11px] font-bold px-2 py-0.5 rounded-md border-0 uppercase tracking-wider`}
+            >
               {statusConfig[task.status]?.label || task.status}
             </Badge>
-            <Badge className={`${priorityStyles[task.priority] || priorityStyles.medium} text-xs font-medium`}>
-              {priorityLabels[task.priority] || task.priority}
-            </Badge>
+            
             {/* In Progress Station Badge */}
             {task.column === "in-progress" && task.inProgressStation && (
-              <Badge className={`${inProgressStationConfig[task.inProgressStation].bgClass} border text-xs font-medium flex items-center gap-1.5`}>
+              <Badge 
+                variant="outline"
+                className={`${inProgressStationConfig[task.inProgressStation].bgClass} border-0 text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1.5`}
+              >
                 {getStationIcon(inProgressStationConfig[task.inProgressStation].icon)}
                 {inProgressStationConfig[task.inProgressStation].label}
               </Badge>
@@ -136,39 +150,31 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
           </div>
 
           {/* Footer - Meta info & Avatar */}
-          <div className="flex items-center justify-between mt-2 pt-3 border-t border-slate-50">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+          <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/30">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
               {task.dueDate && (
-                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md font-medium ${new Date(task.dueDate) < new Date() ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-slate-50 text-slate-600 border border-slate-100'}`}>
-                  <Calendar className="w-3.5 h-3.5" />
+                <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full font-bold text-[10px] ${
+                  new Date(task.dueDate) < new Date() 
+                    ? 'bg-rose-50 text-rose-600' 
+                    : 'bg-muted/50 text-muted-foreground'
+                }`}>
+                  <Calendar className="w-3 h-3" />
                   <span>{format(task.dueDate, "d MMM", { locale: he })}</span>
                 </div>
               )}
 
-              {task.figmaLink && (
-                <div className="bg-slate-50 p-1.5 rounded-md border border-slate-100 hover:bg-purple-50 hover:text-purple-600 transition-colors" title="Figma Design">
-                  <Figma className="w-3.5 h-3.5" />
-                </div>
-              )}
-
-              {task.processSpecLink && (
-                <div className="bg-slate-50 p-1.5 rounded-md border border-slate-100 hover:bg-blue-50 hover:text-blue-600 transition-colors" title="אפיון תהליך">
-                  <FileText className="w-3.5 h-3.5" />
-                </div>
-              )}
-
               {(task.files.length > 0 || task.comments.length > 0) && (
-                <div className="flex items-center gap-2 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
+                <div className="flex items-center gap-2.5 px-1">
                   {task.files.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <FileText className="w-3 h-3" />
-                      <span className="font-bold">{task.files.length}</span>
+                    <div className="flex items-center gap-1 hover:text-foreground transition-colors" title={`${task.files.length} קבצים`}>
+                      <FileText className="w-3.5 h-3.5" />
+                      <span className="font-bold text-[11px]">{task.files.length}</span>
                     </div>
                   )}
                   {task.comments.length > 0 && (
-                    <div className="flex items-center gap-1">
-                      <MessageSquare className="w-3 h-3" />
-                      <span className="font-bold">{task.comments.length}</span>
+                    <div className="flex items-center gap-1 hover:text-foreground transition-colors" title={`${task.comments.length} תגובות`}>
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span className="font-bold text-[11px]">{task.comments.length}</span>
                     </div>
                   )}
                 </div>
@@ -178,27 +184,29 @@ export function TaskCard({ task, compact, onEdit, draggable, onDragStart }: Task
             <div className="flex items-center -space-x-2 rtl:space-x-reverse">
               {/* Handler Avatar */}
               {handler && (
-                <div className="relative z-10" title={`גורם מטפל: ${handler.name}`}>
-                  <Avatar className="w-7 h-7 ring-2 ring-white shadow-sm">
+                <div className="relative z-10 group/avatar" title={`גורם מטפל: ${handler.name}`}>
+                  <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm transition-transform group-hover/avatar:scale-110">
                     <AvatarImage src={handler.avatar} alt={handler.name} />
-                    <AvatarFallback className="text-[9px] bg-amber-100 text-amber-700 font-bold">
+                    <AvatarFallback className="text-[10px] bg-amber-100 text-amber-700 font-bold uppercase">
                       {handler.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm ring-1 ring-slate-100">
-                    <Wrench className="w-2 h-2 text-amber-600" />
+                  <div className="absolute -bottom-0.5 -right-0.5 bg-amber-500 rounded-full p-0.5 shadow-sm ring-1 ring-background">
+                    <Wrench className="w-2 h-2 text-white" />
                   </div>
                 </div>
               )}
 
               {/* Assignee Avatar */}
               {assignee && (
-                <Avatar className="w-8 h-8 ring-2 ring-white shadow-md z-0" title={`אחראי: ${assignee.name}`}>
-                  <AvatarImage src={assignee.avatar} alt={assignee.name} />
-                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold">
-                    {assignee.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative group/avatar" title={`אחראי: ${assignee.name}`}>
+                  <Avatar className="w-8 h-8 ring-2 ring-background shadow-sm transition-transform group-hover/avatar:scale-110">
+                    <AvatarImage src={assignee.avatar} alt={assignee.name} />
+                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-bold uppercase">
+                      {assignee.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
               )}
             </div>
           </div>

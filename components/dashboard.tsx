@@ -99,48 +99,59 @@ export function Dashboard() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navigation Bar */}
-        <header className="bg-card border-b sticky top-0 z-[60] shadow-sm">
-        <div className="flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6">
+        <header className="bg-card/80 backdrop-blur-md border-b sticky top-0 z-[60] shadow-sm">
+        <div className="flex items-center justify-between h-16 sm:h-20 px-4 sm:px-8">
           {/* Logo & Title */}
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-              <LayoutGrid className="w-6 h-6 text-primary-foreground" />
+          <div className="flex items-center gap-5">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/60 rounded-2xl flex items-center justify-center shadow-xl shadow-primary/20 transform -rotate-3 hover:rotate-0 transition-transform">
+              <LayoutGrid className="w-7 h-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold">לוח משימות</h1>
-              <p className="text-xs text-muted-foreground">{activeTasksCount} משימות פעילות</p>
+              <h1 className="text-xl font-black tracking-tight text-foreground/90">מערכת משימות</h1>
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{activeTasksCount} משימות בביצוע</p>
+              </div>
             </div>
           </div>
 
           {/* Center - Search & Filters */}
-          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+          <div className="hidden lg:flex flex-1 max-w-xl mx-12">
             <AdvancedFilters onFilterChange={setFilters} />
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <UserManagement />
             <NotificationsPanel />
 
             {/* Add Task Button */}
             {!isViewer() && (
-              <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2 shadow-lg shadow-primary/25 h-10 px-5 font-medium rounded-lg">
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">משימה חדשה</span>
+              <Button 
+                onClick={() => setIsCreateDialogOpen(true)} 
+                className="gap-2 shadow-xl shadow-primary/20 h-11 px-6 font-bold rounded-xl bg-primary hover:bg-primary/90 transition-all hover:scale-105 active:scale-95"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="hidden sm:inline text-sm">משימה חדשה</span>
               </Button>
             )}
 
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-3 pr-2 h-10 rounded-lg hover:bg-muted/60">
-                  <Avatar className="w-8 h-8 ring-2 ring-primary/20">
-                    <AvatarImage src={currentUser?.avatar || "/placeholder.svg"} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-sm font-semibold">
-                      <User className="w-4 h-4" />
+                <Button variant="ghost" className="gap-3 pr-2 h-11 rounded-xl hover:bg-muted/80 border border-transparent hover:border-border/50 transition-all">
+                  <Avatar className="w-9 h-9 ring-2 ring-primary/10">
+                    <AvatarImage src={currentUser?.avatar} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-sm font-black">
+                      {currentUser?.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden sm:inline font-medium">{currentUser?.name}</span>
+                  <div className="hidden sm:flex flex-col items-start text-right">
+                    <span className="text-sm font-bold leading-none mb-1">{currentUser?.name}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">
+                      {currentUser?.role === "admin" ? "מנהל מערכת" : "חבר צוות"}
+                    </span>
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -170,20 +181,41 @@ export function Dashboard() {
       </header>
 
       {/* Sub Header - View Tabs */}
-      <div className="bg-card border-b px-4 sm:px-6 py-2 sm:py-3 shadow-sm overflow-x-auto">
-        <div className="flex items-center gap-1 sm:gap-2 min-w-max">
-          {views.map((view) => (
-            <Button
-              key={view.id}
-              variant={currentView === view.id ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setCurrentView(view.id)}
-              className={`gap-1.5 sm:gap-2 rounded-lg h-8 sm:h-9 text-xs sm:text-sm font-medium ${currentView === view.id ? "shadow-md shadow-primary/20" : ""}`}
-            >
-              <view.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden xs:inline">{view.label}</span>
-            </Button>
-          ))}
+      <div className="bg-card/50 backdrop-blur-sm border-b px-4 sm:px-8 py-3 sm:py-4 overflow-x-auto">
+        <div className="flex items-center justify-between gap-4 min-w-max">
+          <div className="flex items-center gap-2">
+            {views.map((view) => (
+              <Button
+                key={view.id}
+                variant={currentView === view.id ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setCurrentView(view.id)}
+                className={`gap-2 rounded-xl h-10 px-4 text-sm font-bold transition-all ${
+                  currentView === view.id 
+                    ? "shadow-lg shadow-primary/20 scale-105" 
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                <view.icon className="w-4 h-4" />
+                <span>{view.label}</span>
+              </Button>
+            ))}
+          </div>
+          
+          <div className="flex items-center gap-4 text-xs font-bold text-muted-foreground/60 uppercase tracking-widest bg-muted/30 px-4 py-2 rounded-full border border-border/20">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#676879]" />
+              <span>To Do</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#0086c0]" />
+              <span>In Progress</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#00c875]" />
+              <span>Done</span>
+            </div>
+          </div>
         </div>
       </div>
 

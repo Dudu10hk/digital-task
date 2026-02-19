@@ -3,43 +3,43 @@ import type { TaskStatus, BoardColumn, InProgressStation } from "./types"
 export const statusConfig: Record<TaskStatus, { label: string; color: string; bgClass: string }> = {
   todo: {
     label: "לביצוע",
-    color: "bg-slate-400",
-    bgClass: "bg-slate-50 text-slate-700 border-slate-200 shadow-sm",
+    color: "bg-[#676879]",
+    bgClass: "bg-[#676879]/10 text-[#676879] border-[#676879]/20",
   },
   "in-progress": {
     label: "בעבודה",
-    color: "bg-blue-500",
-    bgClass: "bg-blue-50 text-blue-700 border-blue-200 shadow-sm",
+    color: "bg-[#0086c0]",
+    bgClass: "bg-[#0086c0]/10 text-[#0086c0] border-[#0086c0]/20",
   },
   review: {
     label: "בבדיקה",
-    color: "bg-purple-500",
-    bgClass: "bg-purple-50 text-purple-700 border-purple-200 shadow-sm",
+    color: "bg-[#a25ddc]",
+    bgClass: "bg-[#a25ddc]/10 text-[#a25ddc] border-[#a25ddc]/20",
   },
   blocked: {
     label: "חסום",
-    color: "bg-red-500",
-    bgClass: "bg-red-50 text-red-700 border-red-200 shadow-sm",
+    color: "bg-[#e2445c]",
+    bgClass: "bg-[#e2445c]/10 text-[#e2445c] border-[#e2445c]/20",
   },
   done: {
     label: "הושלם",
-    color: "bg-emerald-500",
-    bgClass: "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm",
+    color: "bg-[#00c875]",
+    bgClass: "bg-[#00c875]/10 text-[#00c875] border-[#00c875]/20",
   },
   qa: {
     label: "QA",
-    color: "bg-indigo-500",
-    bgClass: "bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm",
+    color: "bg-[#a25ddc]",
+    bgClass: "bg-[#a25ddc]/10 text-[#a25ddc] border-[#a25ddc]/20",
   },
   "on-hold": {
     label: "בהמתנה/תקוע",
-    color: "bg-rose-500",
-    bgClass: "bg-rose-50 text-rose-700 border-rose-200 shadow-sm",
+    color: "bg-[#fdab3d]",
+    bgClass: "bg-[#fdab3d]/10 text-[#fdab3d] border-[#fdab3d]/20",
   },
   canceled: {
     label: "בוטל/ארכיון",
-    color: "bg-slate-300",
-    bgClass: "bg-slate-100 text-slate-500 border-slate-200 opacity-70",
+    color: "bg-[#676879]",
+    bgClass: "bg-[#676879]/5 text-[#676879]/60 border-[#676879]/10",
   },
 }
 
@@ -51,15 +51,15 @@ export const statusOptions = Object.entries(statusConfig).map(([value, config]) 
 export const columnConfig: Record<BoardColumn, { label: string; color: string }> = {
   todo: {
     label: "To Do",
-    color: "bg-sky-500",
+    color: "bg-[#676879]",
   },
   "in-progress": {
     label: "In Progress",
-    color: "bg-blue-500",
+    color: "bg-[#0086c0]",
   },
   done: {
     label: "Done",
-    color: "bg-emerald-500",
+    color: "bg-[#00c875]",
   },
 }
 

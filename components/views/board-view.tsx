@@ -192,15 +192,17 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
 
             {/* Column Content */}
             <div
-              className={`min-h-[200px] p-3 rounded-xl transition-colors duration-200 ${
-                dragOverColumn === column.id ? "bg-primary/5 ring-2 ring-primary/20 ring-dashed" : "bg-muted/30"
+              className={`min-h-[500px] p-3 rounded-2xl transition-all duration-300 ${
+                dragOverColumn === column.id 
+                  ? "bg-primary/5 ring-2 ring-primary/20 ring-dashed shadow-inner" 
+                  : "bg-muted/40 border border-border/20"
               }`}
             >
               {/* Drop zone at the top - show when dragging within same column */}
               {draggedTaskId && draggedFromColumn === column.id && canReorderInColumn(column.id) && (
                 <div
-                  className={`h-0.5 mb-2 rounded-full transition-all duration-200 ${
-                    dropTargetIndex === 1 ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
+                  className={`h-1.5 mb-3 rounded-full transition-all duration-200 ${
+                    dropTargetIndex === 1 ? "bg-primary/40 scale-x-100" : "bg-transparent scale-x-90"
                   }`}
                   onDragOver={(e) => handleDragOverDropZone(e, column.id, 1)}
                   onDrop={(e) => handleDropAtIndex(e, column.id, 1)}
@@ -264,8 +266,8 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                     {/* Drop zone after each task - show when dragging within same column */}
                     {draggedTaskId && draggedFromColumn === column.id && canReorder && (
                       <div
-                        className={`h-0.5 mt-2 rounded-full transition-all duration-200 ${
-                          isDropTargetBefore ? "bg-primary/60 h-1" : "bg-transparent hover:bg-primary/20"
+                        className={`h-1.5 mt-3 rounded-full transition-all duration-200 ${
+                          isDropTargetBefore ? "bg-primary/40 scale-x-100" : "bg-transparent scale-x-90"
                         }`}
                         onDragOver={(e) => handleDragOverDropZone(e, column.id, displayNumber + 1)}
                         onDrop={(e) => handleDropAtIndex(e, column.id, displayNumber + 1)}

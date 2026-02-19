@@ -5,34 +5,34 @@
 
 :root {
   /* Monday.com inspired color palette - clean, warm, professional */
-  --background: oklch(0.98 0.005 60);
-  --foreground: oklch(0.18 0.02 260);
+  --background: oklch(0.99 0.002 60);
+  --foreground: oklch(0.15 0.02 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 260);
+  --card-foreground: oklch(0.15 0.02 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 260);
-  --primary: oklch(0.55 0.22 260);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.01 260);
-  --secondary-foreground: oklch(0.18 0.02 260);
-  --muted: oklch(0.96 0.008 60);
-  --muted-foreground: oklch(0.48 0.02 260);
-  --accent: oklch(0.94 0.02 60);
-  --accent-foreground: oklch(0.18 0.02 260);
-  --destructive: oklch(0.58 0.22 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.91 0.01 60);
-  --input: oklch(0.91 0.01 60);
-  --ring: oklch(0.55 0.22 260);
-  --radius: 0.625rem;
+  --popover-foreground: oklch(0.15 0.02 260);
+  --primary: oklch(0.58 0.22 260);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.97 0.01 260);
+  --secondary-foreground: oklch(0.15 0.02 260);
+  --muted: oklch(0.97 0.005 60);
+  --muted-foreground: oklch(0.45 0.02 260);
+  --accent: oklch(0.95 0.02 60);
+  --accent-foreground: oklch(0.15 0.02 260);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.92 0.01 60);
+  --input: oklch(0.92 0.01 60);
+  --ring: oklch(0.58 0.22 260);
+  --radius: 0.75rem;
 
-  /* Status colors - custom palette */
-  --status-todo: #fee440;
-  --status-progress: #f15bb5;
-  --status-done: #00bbf9;
-  --status-qa: #00f5d4;
-  --status-on-hold: #E25050;
-  --status-canceled: #9b5de5;
+  /* Status colors - modern professional palette */
+  --status-todo: #676879;
+  --status-progress: #0086c0;
+  --status-done: #00c875;
+  --status-qa: #a25ddc;
+  --status-on-hold: #fdab3d;
+  --status-canceled: #e2445c;
 
   /* Priority colors */
   --priority-high: oklch(0.62 0.24 25);
