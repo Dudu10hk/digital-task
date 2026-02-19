@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useMemo, useCallback, type ReactNode } from "react"
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef, type ReactNode } from "react"
 import { toast } from "sonner"
 import { supabase } from "./supabase"
 import {
@@ -64,6 +64,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const [archivedTasks, setArchivedTasks] = useState<ArchivedTask[]>([])
   const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([])
   const [loading, setLoading] = useState(true)
+  const hasLoadedDataRef = useRef(false)
 
   // Load users from Supabase on mount and restore session
   useEffect(() => {
@@ -180,14 +181,18 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (currentUser) {
       loadAllDataFromSupabase()
+    } else {
+      hasLoadedDataRef.current = false
     }
   }, [currentUser])
 
   // Auto-save to Supabase when data changes
   useEffect(() => {
-    if (currentUser && tasks.length > 0) {
+    if (!currentUser || !hasLoadedDataRef.current) return
+    const timeout = setTimeout(() => {
       saveTasks(tasks)
-    }
+    }, 350)
+    return () => clearTimeout(timeout)
   }, [tasks, currentUser])
 
   useEffect(() => {
@@ -226,9 +231,11 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       setNotifications(notificationsData)
       setStickyNotes(notesData)
       setArchivedTasks(archivedData)
+      hasLoadedDataRef.current = true
 
     } catch (error) {
       // Error loading data - continuing with empty data
+      hasLoadedDataRef.current = true
     } finally {
       setLoading(false)
     }
@@ -865,7 +872,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const reorderTaskInColumn = async (taskId: string, newOrder: number, column: BoardColumn) => {
+  const reorderTaskInColumn = (taskId: string, newOrder: number, column: BoardColumn) => {
     if (!currentUser) return
     
     console.log('🔄 reorderTaskInColumn called:', { taskId, newOrder, column })
@@ -917,24 +924,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     // Update local state immediately for smooth UX
     setTasks(updatedTasks)
 
-    // Save to database using saveTasks (JSONB-compatible)
-    try {
-      console.log('💾 Saving all tasks to Supabase with JSONB structure')
-      const success = await saveTasks(updatedTasks)
-      
-      if (success) {
-        console.log('✅ Successfully saved to Supabase')
-        toast.success('הסדר עודכן בהצלחה')
-      } else {
-        throw new Error('saveTasks returned false')
-      }
-    } catch (error) {
-      console.error('❌ Error saving to Supabase:', error)
-      toast.error('שגיאה בעדכון הסדר')
-      // Reload tasks from server on error
-      const freshTasks = await loadTasks()
-      setTasks(freshTasks)
-    }
+    // Persisted by centralized autosave effect.
+    toast.success('הסדר עודכן בהצלחה')
   }
 
   const updateInProgressStation = (taskId: string, station: InProgressStation, note?: string) => {

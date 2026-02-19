@@ -11,14 +11,35 @@ export async function saveTasks(tasks: Task[]): Promise<boolean> {
   }
   
   try {
-    // Delete all existing
-    await supabase.from('tasks').delete().neq('id', '')
-    
-    // Insert all
+    // Upsert all current tasks first (safer than delete-all then insert).
     const rows = tasks.map(task => ({ id: task.id, data: task }))
-    const { error } = await supabase.from('tasks').insert(rows)
-    
-    if (error) throw error
+    if (rows.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('tasks')
+        .upsert(rows, { onConflict: 'id' })
+      if (upsertError) throw upsertError
+    }
+
+    // Then delete rows that no longer exist in local state.
+    // This avoids data loss windows during concurrent saves.
+    const { data: existingRows, error: existingError } = await supabase
+      .from('tasks')
+      .select('id')
+    if (existingError) throw existingError
+
+    const currentIds = new Set(tasks.map(task => task.id))
+    const idsToDelete = (existingRows || [])
+      .map(row => row.id as string)
+      .filter(id => !currentIds.has(id))
+
+    if (idsToDelete.length > 0) {
+      const { error: deleteError } = await supabase
+        .from('tasks')
+        .delete()
+        .in('id', idsToDelete)
+      if (deleteError) throw deleteError
+    }
+
     return true
   } catch (error) {
     console.error('Error saving tasks:', error)

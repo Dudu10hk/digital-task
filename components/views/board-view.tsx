@@ -94,10 +94,10 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
     }
   }
 
-  const handleOrderClick = (task: Task, column: BoardColumn) => {
+  const handleOrderClick = (task: Task, column: BoardColumn, displayNumber: number) => {
     if (!canReorderInColumn(column)) return
     setEditingOrderTaskId(task.id)
-    setNewOrderValue(task.order.toString())
+    setNewOrderValue(displayNumber.toString())
   }
 
   const handleOrderChange = (taskId: string, column: BoardColumn) => {
@@ -220,7 +220,7 @@ export function BoardView({ filteredTasks }: { filteredTasks: Task[] }) {
                       {showPriorityNumber && (
                         <div 
                           className="absolute -right-2 -top-2 z-10 flex items-center justify-center w-8 h-8 cursor-pointer group"
-                          onClick={() => handleOrderClick(task, column.id)}
+                          onClick={() => handleOrderClick(task, column.id, displayNumber)}
                           title="לחץ לשינוי מיקום"
                         >
                           {editingOrderTaskId === task.id ? (
